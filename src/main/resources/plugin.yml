@@ -1,0 +1,8 @@
+name: PacketPlots
+main: net.dashmc.plots.PacketPlots
+version: ${project.version}
+
+authors:
+  - Tandhjulet
+  - Vqlde
+
