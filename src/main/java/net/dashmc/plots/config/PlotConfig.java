@@ -11,6 +11,6 @@ import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 public class PlotConfig extends OkaeriConfig {
 
 	@Comment("Chunk coord pairs for the chunks to be virtualized")
-	public HashSet<ChunkCoordIntPair> virtualChunks = new HashSet<>();
+	HashSet<ChunkCoordIntPair> virtualChunks = new HashSet<>();
 
 }
