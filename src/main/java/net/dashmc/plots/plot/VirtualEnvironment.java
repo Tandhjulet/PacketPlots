@@ -102,6 +102,14 @@ public class VirtualEnvironment implements IDataHolder {
 		togglePacketHandler(false);
 	}
 
+	/**
+	 * Simply stops the packet interceptor - doesn't send any new packets to
+	 * override the virtualized chunk for the player.
+	 */
+	public void stopVirtualization() {
+		togglePacketHandler(true);
+	}
+
 	private void togglePacketHandler(boolean remove) {
 		Player owner = getOwner();
 		if (owner == null)

@@ -11,6 +11,7 @@ import eu.okaeri.configs.yaml.bukkit.serdes.SerdesBukkit;
 import lombok.Getter;
 import net.dashmc.plots.config.PlotConfig;
 import net.dashmc.plots.config.serializers.ChunkCoordPairSerializer;
+import net.dashmc.plots.listeners.ConnectionListener;
 
 public class PacketPlots extends JavaPlugin {
 
@@ -30,6 +31,8 @@ public class PacketPlots extends JavaPlugin {
 			conf.saveDefaults();
 			conf.load(true);
 		});
+
+		ConnectionListener.register();
 	}
 
 	@Override
