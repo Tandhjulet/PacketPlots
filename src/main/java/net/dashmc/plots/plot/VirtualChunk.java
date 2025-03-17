@@ -1,7 +1,9 @@
 package net.dashmc.plots.plot;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+
 import lombok.Getter;
-import net.dashmc.plots.data.BufferedDataStream;
 import net.dashmc.plots.data.IDataHolder;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 
@@ -12,17 +14,17 @@ public class VirtualChunk implements IDataHolder {
 		this.coordPair = coordPair;
 	}
 
-	public VirtualChunk(BufferedDataStream stream) {
-		serialize(stream);
+	public VirtualChunk(DataInputStream stream) {
+		deserialize(stream);
 	}
 
 	@Override
-	public void deserialize(BufferedDataStream stream) {
+	public void deserialize(DataInputStream stream) {
 
 	}
 
 	@Override
-	public void serialize(BufferedDataStream stream) {
+	public void serialize(DataOutputStream stream) {
 
 	}
 

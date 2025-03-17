@@ -1,7 +1,11 @@
 package net.dashmc.plots.data;
 
-public interface IDataHolder {
-	public abstract void deserialize(BufferedDataStream stream);
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
-	public abstract void serialize(BufferedDataStream stream);
+public interface IDataHolder {
+	public abstract void deserialize(DataInputStream stream) throws IOException;
+
+	public abstract void serialize(DataOutputStream stream) throws IOException;
 }

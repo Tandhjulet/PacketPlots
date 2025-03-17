@@ -1,5 +1,7 @@
 package net.dashmc.plots.listeners;
 
+import java.io.IOException;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,9 +14,15 @@ import net.dashmc.plots.plot.VirtualEnvironment;
 public class ConnectionListener implements Listener {
 
 	@EventHandler
-	public void onPlayerJoin(PlayerJoinEvent e) {
-		Player player = e.getPlayer();
-		new VirtualEnvironment(player);
+	public void onPlayerJoin(PlayerJoinEvent event) {
+		Player player = event.getPlayer();
+		try {
+			new VirtualEnvironment(player);
+		} catch (IOException e) {
+			Bukkit.getLogger()
+					.severe("A severe error occured whilst loading the PacketPlot of " + player.getUniqueId());
+			e.printStackTrace();
+		}
 
 	}
 
