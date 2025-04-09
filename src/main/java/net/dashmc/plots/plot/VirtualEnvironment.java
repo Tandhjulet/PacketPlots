@@ -187,12 +187,34 @@ public class VirtualEnvironment implements IDataHolder {
 		// Outgoing
 		@Override
 		public void write(ChannelHandlerContext chx, Object packet, ChannelPromise promise) throws Exception {
+			// Packets to cancel/modify if they occur in the environment
+
+			// Chunks:
+			// Map Chunk Bulk
+			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Map_Chunk_Bulk)
+			// Chunk Data (https://minecraft.wiki/w/Protocol?oldid=2772100#Chunk_Data)
+
+			// Block updates:
+			// Block change (https://minecraft.wiki/w/Protocol?oldid=2772100#Block_Change)
+			// Multi block change
+			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Multi_Block_Change)
+			// Block action (https://minecraft.wiki/w/Protocol?oldid=2772100#Block_Action)
+
 			super.write(chx, packet, promise);
 		}
 
 		// Incomming
 		@Override
 		public void channelRead(ChannelHandlerContext chx, Object packet) throws Exception {
+			// Packets to pass to the env. if they occur there
+
+			// Interactions
+			// Player Digging
+			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Player_Digging)
+			// Player Block Placement
+			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Player_Block_Placement)
+			// Update Sign (https://minecraft.wiki/w/Protocol?oldid=2772100#Update_Sign)
+
 			super.channelRead(chx, packet);
 		}
 
