@@ -5,11 +5,11 @@ import java.util.HashSet;
 import java.util.LinkedList;
 
 import net.dashmc.plots.PacketPlots;
+import net.dashmc.plots.config.PlotConfig.ChunkConfig;
 import net.dashmc.plots.plot.PacketModifier;
 import net.dashmc.plots.plot.VirtualChunk;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Utils;
-import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunkBulk;
 
@@ -48,11 +48,6 @@ public class MapChunkBulkPacketModifier extends PacketModifier<PacketPlayOutMapC
 				}
 			}
 
-			// if (indices.size() > 0) {
-			// environment.getNMSOwner().playerConnection.sendPacket(clonePacket(packet));
-			// return true;
-			// }
-
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			e.printStackTrace();
 		}
@@ -70,9 +65,9 @@ public class MapChunkBulkPacketModifier extends PacketModifier<PacketPlayOutMapC
 	}
 
 	static {
-		HashSet<ChunkCoordIntPair> coordIntPairs = PacketPlots.getPlotConfig().getVirtualChunks();
+		HashSet<ChunkConfig> coordIntPairs = PacketPlots.getPlotConfig().getVirtualChunks();
 		coordIntPairs.forEach((pair) -> {
-			coordPairs.add(pair.hashCode());
+			coordPairs.add(pair.coords.hashCode());
 		});
 
 		try {

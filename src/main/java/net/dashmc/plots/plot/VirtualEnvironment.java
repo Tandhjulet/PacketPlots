@@ -8,7 +8,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -22,6 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import lombok.Getter;
 import net.dashmc.plots.PacketPlots;
+import net.dashmc.plots.config.PlotConfig.ChunkConfig;
 import net.dashmc.plots.data.IDataHolder;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
@@ -83,17 +86,29 @@ public class VirtualEnvironment implements IDataHolder {
 		this.world = PacketPlots.getPlotConfig().getWorld();
 		net.minecraft.server.v1_8_R3.World nmsWorld = ((CraftWorld) world).getHandle();
 
-		HashSet<ChunkCoordIntPair> coordIntPairs = PacketPlots.getPlotConfig().getVirtualChunks();
+		HashSet<ChunkConfig> chunks = PacketPlots.getPlotConfig().getVirtualChunks();
 
-		for (ChunkCoordIntPair coordIntPair : coordIntPairs) {
-			virtualChunks.put(coordIntPair.hashCode(), new VirtualChunk(coordIntPair, nmsWorld));
+		for (ChunkConfig chunk : chunks) {
+			virtualChunks.put(chunk.coords.hashCode(),
+					new VirtualChunk(chunk.coords, nmsWorld, chunk.getSectionsAsMask()));
 		}
 
-		FileOutputStream fileOutputStream = new FileOutputStream(dataFile);
-		DataOutputStream dataOutputStream = new DataOutputStream(fileOutputStream);
-		serialize(dataOutputStream);
-
+		save();
 		togglePacketHandler(false);
+	}
+
+	public void save() {
+		try {
+			File dataFile = new File(DATA_DIRECTORY, getOwnerUuid() + ".dat");
+			FileOutputStream fileOutputStream = new FileOutputStream(dataFile);
+			DataOutputStream dataOutputStream = new DataOutputStream(fileOutputStream);
+			serialize(dataOutputStream);
+
+			fileOutputStream.close();
+			dataOutputStream.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public VirtualEnvironment(DataInputStream stream) throws IOException {
@@ -147,7 +162,6 @@ public class VirtualEnvironment implements IDataHolder {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void deserialize(DataInputStream stream) throws IOException {
 		this.ownerUuid = new UUID(stream.readLong(), stream.readLong());
 		this.world = Bukkit.getWorld(new UUID(stream.readLong(), stream.readLong()));
@@ -155,23 +169,26 @@ public class VirtualEnvironment implements IDataHolder {
 
 		int arraySize = stream.readInt();
 
-		HashSet<ChunkCoordIntPair> chunkCoordPairs = (HashSet<ChunkCoordIntPair>) PacketPlots.getPlotConfig()
-				.getVirtualChunks().clone();
+		Map<ChunkCoordIntPair, ChunkConfig> chunkCoordPairs = PacketPlots.getPlotConfig().getVirtualChunks().stream()
+				.collect(Collectors.toMap(e -> e.coords, e -> e));
 
 		// Read in the saved chunks. If any of them aren't specified as virtual in the
 		// config any more discard them:
 		for (int i = 0; i < arraySize; i++) {
 			VirtualChunk chunk = new VirtualChunk(((CraftWorld) world).getHandle(), stream);
-			if (!chunkCoordPairs.contains(chunk.getCoordPair()))
+			if (!chunkCoordPairs.containsKey(chunk.getCoordPair()))
 				continue;
 
-			chunkCoordPairs.remove(chunk.getCoordPair());
+			char allowedSections = chunkCoordPairs.remove(chunk.getCoordPair()).getSectionsAsMask();
+			chunk.setAllowedSections(allowedSections);
+
 			virtualChunks.put(chunk.getCoordPair().hashCode(), chunk);
 		}
 
 		// Fill the remaining spots, if any, with new virtual chunks
-		for (ChunkCoordIntPair pair : chunkCoordPairs) {
-			virtualChunks.put(pair.hashCode(), new VirtualChunk(pair, nmsWorld));
+		for (ChunkConfig chunk : chunkCoordPairs.values()) {
+			virtualChunks.put(chunk.coords.hashCode(),
+					new VirtualChunk(chunk.coords, nmsWorld, chunk.getSectionsAsMask()));
 		}
 
 	}

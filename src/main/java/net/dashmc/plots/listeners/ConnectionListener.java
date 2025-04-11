@@ -30,7 +30,10 @@ public class ConnectionListener implements Listener {
 	@EventHandler
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
-		VirtualEnvironment.get(player).stopVirtualization();
+		VirtualEnvironment environment = VirtualEnvironment.get(player);
+		environment.stopVirtualization();
+		environment.save();
+
 	}
 
 	public static void register() {

@@ -41,26 +41,43 @@ public class VirtualChunk implements IDataHolder {
 	private World world;
 	private Section[] sections = new Section[16];
 	private char sectionMask = 0;
+	private char allowedSections;
 
-	public VirtualChunk(ChunkCoordIntPair coordPair, World world) {
+	public VirtualChunk(ChunkCoordIntPair coordPair, World world, char allowedSections) {
 		this.coordPair = coordPair;
 		this.world = world;
 		this.chunk = world.getChunkAt(coordPair.x, coordPair.z);
+		this.allowedSections = allowedSections;
 
 		int i = 0;
 		for (ChunkSection section : chunk.getSections()) {
-			if (section == null)
-				i++;
-			else {
+			if (section != null && (allowedSections & 1 << i) != 0) {
 				sectionMask |= 1 << i;
-				sections[i++] = new Section(section);
+				sections[i] = new Section(section);
 			}
+
+			i++;
 		}
 	}
 
 	public VirtualChunk(World world, DataInputStream stream) throws IOException {
 		this.world = world;
 		deserialize(stream);
+	}
+
+	public void setAllowedSections(char allowedSections) {
+		this.allowedSections = allowedSections;
+		for (int i = 0; i < 16; i++) {
+			int mask = 1 << i;
+			// if there is a section which isnt allowed, remove it
+			if ((sectionMask & mask) != 0 && (allowedSections & mask) == 0) {
+				int removeMask = 0xffff ^ (1 << i);
+				sectionMask &= removeMask;
+
+				sections[i] = null;
+				Bukkit.getLogger().info("removed section " + i);
+			}
+		}
 	}
 
 	@Override
@@ -74,6 +91,7 @@ public class VirtualChunk implements IDataHolder {
 				continue;
 
 			sections[i] = new Section(stream);
+			Bukkit.getLogger().info("deserialized " + i);
 		}
 	}
 
@@ -83,6 +101,7 @@ public class VirtualChunk implements IDataHolder {
 		stream.writeInt(coordPair.z);
 
 		stream.writeChar(sectionMask);
+		Bukkit.getLogger().info("serialized " + sectionMask);
 		for (Section virtualChunkSection : sections) {
 			if (virtualChunkSection == null)
 				continue;
@@ -105,10 +124,21 @@ public class VirtualChunk implements IDataHolder {
 
 		int j;
 		for (j = 0; j < sections.length; j++) {
-			Section section = sections[j];
-			if (section != null && !section.isEmpty() && (mask & 1 << j) != 0) {
-				chunkMap.b |= 1 << j;
-				arraylist.add(section);
+			if ((allowedSections & 1 << j) != 0) {
+				Section section = sections[j];
+				if (section != null && !section.isEmpty() && (mask & 1 << j) != 0) {
+					chunkMap.b |= 1 << j;
+					arraylist.add(section);
+				}
+			} else {
+				ChunkSection chunkSection = chunk.getSections()[j];
+				if (chunkSection == null)
+					continue;
+				Section section = new Section(chunkSection);
+				if (!section.isEmpty() && (mask & 1 << j) != 0) {
+					chunkMap.b |= 1 << j;
+					arraylist.add(section);
+				}
 			}
 		}
 
