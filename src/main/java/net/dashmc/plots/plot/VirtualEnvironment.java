@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
@@ -25,7 +26,7 @@ import net.dashmc.plots.data.IDataHolder;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.Packet;
-import net.minecraft.server.v1_8_R3.PacketListenerPlayIn;
+import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
 
 /*
  * Data structure:
@@ -38,13 +39,18 @@ import net.minecraft.server.v1_8_R3.PacketListenerPlayIn;
 
 public class VirtualEnvironment implements IDataHolder {
 	private static final HashMap<Player, VirtualEnvironment> virtualEnvironments = new HashMap<>();
+	private static final HashMap<Class<?>, PacketModifier<?>> packetModifiers = new HashMap<>();
 
 	private static final String NETTY_PIPELINE_NAME = "VirtualEnvironment";
 	private static final File DATA_DIRECTORY = new File(PacketPlots.getInstance().getDataFolder(), "data");
 
-	private @Getter VirtualChunk[] virtualChunks;
+	private @Getter HashMap<Integer, VirtualChunk> virtualChunks = new HashMap<>();
 	private @Getter World world;
 	private @Getter UUID ownerUuid;
+
+	public static <T extends Packet<?>> void register(PacketModifier<T> modifier) {
+		packetModifiers.put(modifier.getClazz(), modifier);
+	}
 
 	public static VirtualEnvironment get(Player player) {
 		return virtualEnvironments.get(player);
@@ -62,10 +68,10 @@ public class VirtualEnvironment implements IDataHolder {
 			FileInputStream fileInputStream = new FileInputStream(dataFile);
 			DataInputStream dataInputStream = new DataInputStream(fileInputStream);
 
-			UUID prevUuid = ownerUuid;
+			UUID prevUuid = player.getUniqueId();
 			deserialize(dataInputStream);
 
-			if (prevUuid != ownerUuid)
+			if (!prevUuid.equals(ownerUuid))
 				throw new IOException(
 						"Mismatched UUIDs: (" + prevUuid + " => " + ownerUuid + "). File might be corrupt");
 
@@ -75,13 +81,12 @@ public class VirtualEnvironment implements IDataHolder {
 
 		this.ownerUuid = player.getUniqueId();
 		this.world = PacketPlots.getPlotConfig().getWorld();
+		net.minecraft.server.v1_8_R3.World nmsWorld = ((CraftWorld) world).getHandle();
 
 		HashSet<ChunkCoordIntPair> coordIntPairs = PacketPlots.getPlotConfig().getVirtualChunks();
-		this.virtualChunks = new VirtualChunk[coordIntPairs.size()];
 
-		int i = 0;
 		for (ChunkCoordIntPair coordIntPair : coordIntPairs) {
-			virtualChunks[i++] = new VirtualChunk(coordIntPair);
+			virtualChunks.put(coordIntPair.hashCode(), new VirtualChunk(coordIntPair, nmsWorld));
 		}
 
 		FileOutputStream fileOutputStream = new FileOutputStream(dataFile);
@@ -128,8 +133,17 @@ public class VirtualEnvironment implements IDataHolder {
 		return Bukkit.getPlayer(ownerUuid);
 	}
 
-	public void intercept(Packet<PacketListenerPlayIn> packet) {
+	public EntityPlayer getNMSOwner() {
+		return ((CraftPlayer) getOwner()).getHandle();
+	}
 
+	@SuppressWarnings("unchecked")
+	public <T extends Packet<?>> boolean intercept(T packet) {
+		PacketModifier<T> modifier = (PacketModifier<T>) packetModifiers.get(packet.getClass());
+		if (modifier != null) {
+			return modifier.modify(packet, this);
+		}
+		return false;
 	}
 
 	@Override
@@ -137,28 +151,27 @@ public class VirtualEnvironment implements IDataHolder {
 	public void deserialize(DataInputStream stream) throws IOException {
 		this.ownerUuid = new UUID(stream.readLong(), stream.readLong());
 		this.world = Bukkit.getWorld(new UUID(stream.readLong(), stream.readLong()));
+		net.minecraft.server.v1_8_R3.World nmsWorld = ((CraftWorld) world).getHandle();
 
 		int arraySize = stream.readInt();
 
-		int cP = 0;
 		HashSet<ChunkCoordIntPair> chunkCoordPairs = (HashSet<ChunkCoordIntPair>) PacketPlots.getPlotConfig()
 				.getVirtualChunks().clone();
-		this.virtualChunks = new VirtualChunk[chunkCoordPairs.size()];
 
 		// Read in the saved chunks. If any of them aren't specified as virtual in the
 		// config any more discard them:
 		for (int i = 0; i < arraySize; i++) {
-			VirtualChunk chunk = new VirtualChunk(stream);
+			VirtualChunk chunk = new VirtualChunk(((CraftWorld) world).getHandle(), stream);
 			if (!chunkCoordPairs.contains(chunk.getCoordPair()))
 				continue;
 
 			chunkCoordPairs.remove(chunk.getCoordPair());
-			this.virtualChunks[cP++] = chunk;
+			virtualChunks.put(chunk.getCoordPair().hashCode(), chunk);
 		}
 
 		// Fill the remaining spots, if any, with new virtual chunks
 		for (ChunkCoordIntPair pair : chunkCoordPairs) {
-			this.virtualChunks[cP++] = new VirtualChunk(pair);
+			virtualChunks.put(pair.hashCode(), new VirtualChunk(pair, nmsWorld));
 		}
 
 	}
@@ -171,8 +184,9 @@ public class VirtualEnvironment implements IDataHolder {
 		stream.writeLong(world.getUID().getMostSignificantBits());
 		stream.writeLong(world.getUID().getLeastSignificantBits());
 
-		stream.writeInt(virtualChunks.length);
-		for (VirtualChunk virtualChunk : virtualChunks) {
+		stream.writeInt(virtualChunks.size());
+
+		for (VirtualChunk virtualChunk : virtualChunks.values()) {
 			virtualChunk.serialize(stream);
 		}
 
@@ -183,22 +197,21 @@ public class VirtualEnvironment implements IDataHolder {
 	 * passes the important ones to VirtualEnvironment#intercept.
 	 */
 	private class PacketHandler extends ChannelDuplexHandler {
-
 		// Outgoing
+		@SuppressWarnings("unchecked")
 		@Override
-		public void write(ChannelHandlerContext chx, Object packet, ChannelPromise promise) throws Exception {
+		public void write(ChannelHandlerContext chx, Object obj, ChannelPromise promise) throws Exception {
 			// Packets to cancel/modify if they occur in the environment
-
-			// Chunks:
-			// Map Chunk Bulk
-			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Map_Chunk_Bulk)
-			// Chunk Data (https://minecraft.wiki/w/Protocol?oldid=2772100#Chunk_Data)
 
 			// Block updates:
 			// Block change (https://minecraft.wiki/w/Protocol?oldid=2772100#Block_Change)
 			// Multi block change
 			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Multi_Block_Change)
 			// Block action (https://minecraft.wiki/w/Protocol?oldid=2772100#Block_Action)
+
+			Packet<PacketListenerPlayOut> packet = (Packet<PacketListenerPlayOut>) obj;
+			if (intercept(packet))
+				return;
 
 			super.write(chx, packet, promise);
 		}

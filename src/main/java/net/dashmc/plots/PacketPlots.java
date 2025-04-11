@@ -12,6 +12,7 @@ import lombok.Getter;
 import net.dashmc.plots.config.PlotConfig;
 import net.dashmc.plots.config.serializers.ChunkCoordPairSerializer;
 import net.dashmc.plots.listeners.ConnectionListener;
+import net.dashmc.plots.plot.PacketModifier;
 
 public class PacketPlots extends JavaPlugin {
 
@@ -33,6 +34,7 @@ public class PacketPlots extends JavaPlugin {
 		});
 
 		ConnectionListener.register();
+		PacketModifier.register();
 	}
 
 	@Override

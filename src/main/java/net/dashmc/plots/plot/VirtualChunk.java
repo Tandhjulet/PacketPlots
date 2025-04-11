@@ -3,40 +3,76 @@ package net.dashmc.plots.plot;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+
+import org.bukkit.Bukkit;
+
+import com.google.common.collect.Lists;
 
 import lombok.Getter;
 import net.dashmc.plots.data.IDataHolder;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.Blocks;
+import net.minecraft.server.v1_8_R3.Chunk;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
+import net.minecraft.server.v1_8_R3.ChunkSection;
 import net.minecraft.server.v1_8_R3.IBlockData;
+import net.minecraft.server.v1_8_R3.World;
+import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 
 /*
  * Data structure:
  * int xCoord
  * int zCoord
  * 
- * byte amount of sections
+ * char section bit mask
  * array of sections
  */
 public class VirtualChunk implements IDataHolder {
-	private @Getter ChunkCoordIntPair coordPair;
-	private Section[] sections = new Section[16];
+	private static byte[][] lightArrays = new byte[16][];
+	private static Field nonEmptyBlockCountField;
 
-	public VirtualChunk(ChunkCoordIntPair coordPair) {
+	private @Getter ChunkCoordIntPair coordPair;
+
+	private Chunk chunk;
+	private World world;
+	private Section[] sections = new Section[16];
+	private char sectionMask = 0;
+
+	public VirtualChunk(ChunkCoordIntPair coordPair, World world) {
 		this.coordPair = coordPair;
+		this.world = world;
+		this.chunk = world.getChunkAt(coordPair.x, coordPair.z);
+
+		int i = 0;
+		for (ChunkSection section : chunk.getSections()) {
+			if (section == null)
+				i++;
+			else {
+				sectionMask |= 1 << i;
+				sections[i++] = new Section(section);
+			}
+		}
 	}
 
-	public VirtualChunk(DataInputStream stream) throws IOException {
+	public VirtualChunk(World world, DataInputStream stream) throws IOException {
+		this.world = world;
 		deserialize(stream);
 	}
 
 	@Override
 	public void deserialize(DataInputStream stream) throws IOException {
 		this.coordPair = new ChunkCoordIntPair(stream.readInt(), stream.readInt());
+		this.chunk = world.getChunkAt(coordPair.x, coordPair.z);
 
-		byte length = stream.readByte();
-		for (int i = 0; i < length; i++) {
+		this.sectionMask = stream.readChar();
+		for (int i = 0; i < 16; i++) {
+			if ((sectionMask & (1 << i)) == 0)
+				continue;
+
 			sections[i] = new Section(stream);
 		}
 	}
@@ -46,8 +82,11 @@ public class VirtualChunk implements IDataHolder {
 		stream.writeInt(coordPair.x);
 		stream.writeInt(coordPair.z);
 
-		stream.writeByte(sections.length);
+		stream.writeChar(sectionMask);
 		for (Section virtualChunkSection : sections) {
+			if (virtualChunkSection == null)
+				continue;
+
 			virtualChunkSection.serialize(stream);
 		}
 	}
@@ -60,20 +99,83 @@ public class VirtualChunk implements IDataHolder {
 		return chunk.getCoordPair().equals(getCoordPair());
 	}
 
+	public ChunkMap getChunkMap(int mask, boolean isOverworld, boolean includeBiome) {
+		ChunkMap chunkMap = new ChunkMap();
+		List<Section> arraylist = Lists.newArrayList();
+
+		int j;
+		for (j = 0; j < sections.length; j++) {
+			Section section = sections[j];
+			if (section != null && !section.isEmpty() && (mask & 1 << j) != 0) {
+				chunkMap.b |= 1 << j;
+				arraylist.add(section);
+			}
+		}
+
+		int nonEmptyChunkSections = Integer.bitCount(chunkMap.b);
+		chunkMap.a = new byte[calculateNeededBytes(nonEmptyChunkSections, isOverworld, includeBiome)];
+
+		j = 0;
+		Section section;
+		Iterator<Section> iterator = arraylist.iterator();
+		while (iterator.hasNext()) {
+			section = iterator.next();
+			char[] idArray = section.getBlockIds();
+
+			for (int l = 0; l < idArray.length; l++) {
+				char c0 = idArray[l];
+				chunkMap.a[j++] = (byte) (c0 & 255);
+				chunkMap.a[j++] = (byte) (c0 >> 8 & 255);
+			}
+		}
+
+		byte[] lightArray = lightArrays[nonEmptyChunkSections];
+		System.arraycopy(lightArray, 0, chunkMap.a, j, lightArray.length);
+
+		if (isOverworld) {
+			j += lightArray.length;
+			System.arraycopy(lightArray, 0, chunkMap.a, j, lightArray.length);
+		}
+
+		if (includeBiome) {
+			j += lightArray.length;
+			System.arraycopy(chunk.getBiomeIndex(), 0, chunkMap.a, j, 256);
+		}
+
+		return chunkMap;
+	}
+
+	private static int calculateNeededBytes(int i, boolean isOverworld, boolean includeBiome) {
+		int j = i * 2 * 16 * 16 * 16;
+		int k = i * 16 * 16 * 8;
+		int l = isOverworld ? i * 16 * 16 * 8 : 0;
+		int biome = includeBiome ? 256 : 0;
+
+		return j + k + l + biome;
+	}
+
 	/*
 	 * Data structure:
 	 * yPos (1 byte)
 	 * nonEmptyBlockCount (2 bytes)
 	 * 
-	 * array with length nonEmptyBlockCount of:
-	 * - index (2 bytes)
+	 * array with length 4096:
 	 * - blockId (2 bytes)
 	 */
 	public class Section implements IDataHolder {
 		private @Getter byte yPos;
 		private char nonEmptyBlockCount;
-		// Diff is kept here - not all of the blocks in the chunk
-		private char[] blockIds = new char[4096];
+		private @Getter char[] blockIds = new char[4096];
+
+		public Section(ChunkSection section) {
+			try {
+				yPos = (byte) section.getYPosition();
+				blockIds = section.getIdArray();
+				nonEmptyBlockCount = (char) nonEmptyBlockCountField.getInt(section);
+			} catch (IllegalArgumentException | IllegalAccessException e) {
+				e.printStackTrace();
+			}
+		}
 
 		public Section(DataInputStream stream) throws IOException {
 			deserialize(stream);
@@ -83,10 +185,9 @@ public class VirtualChunk implements IDataHolder {
 		public void deserialize(DataInputStream stream) throws IOException {
 			this.yPos = stream.readByte();
 			this.nonEmptyBlockCount = stream.readChar();
-			for (short i = 0; i < nonEmptyBlockCount; i++) {
-				char pos = stream.readChar();
+			for (short i = 0; i < blockIds.length; i++) {
 				char blockId = stream.readChar();
-				blockIds[pos] = blockId;
+				blockIds[i] = blockId;
 			}
 		}
 
@@ -95,12 +196,6 @@ public class VirtualChunk implements IDataHolder {
 			stream.writeByte(yPos);
 			stream.writeChar(nonEmptyBlockCount);
 			for (char i = 0; i < blockIds.length; i++) {
-				// Don't serialize air blocks - hopefully this can be made up
-				// by the extra char it takes to write the index...
-				if (blockIds[i] == 0)
-					continue;
-
-				stream.writeChar(i);
 				stream.writeChar(blockIds[i]);
 			}
 		}
@@ -114,6 +209,23 @@ public class VirtualChunk implements IDataHolder {
 			return getType(x, y, z).getBlock();
 		}
 
+		public boolean isEmpty() {
+			return this.nonEmptyBlockCount == 0;
+		}
 	}
 
+	static {
+		try {
+			nonEmptyBlockCountField = ChunkSection.class.getDeclaredField("nonEmptyBlockCount");
+			nonEmptyBlockCountField.setAccessible(true);
+		} catch (NoSuchFieldException | SecurityException e) {
+			e.printStackTrace();
+		}
+
+		for (int i = 0; i < lightArrays.length; i++) {
+			int lightArrayLength = i * 16 * 16 * 8;
+			lightArrays[i] = new byte[lightArrayLength];
+			Arrays.fill(lightArrays[i], (byte) 255);
+		}
+	}
 }
