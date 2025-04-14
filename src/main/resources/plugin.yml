@@ -6,3 +6,8 @@ authors:
   - Tandhjulet
   - Vqlde
 
+commands:
+  plot:
+    usage: /<command>
+    permission: '*'
+    description: Manage the PacketPlots plugin

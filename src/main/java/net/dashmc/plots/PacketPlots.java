@@ -9,6 +9,7 @@ import eu.okaeri.configs.ConfigManager;
 import eu.okaeri.configs.yaml.bukkit.YamlBukkitConfigurer;
 import eu.okaeri.configs.yaml.bukkit.serdes.SerdesBukkit;
 import lombok.Getter;
+import net.dashmc.plots.commands.CommandPlot;
 import net.dashmc.plots.config.PlotConfig;
 import net.dashmc.plots.config.serializers.ChunkCoordPairSerializer;
 import net.dashmc.plots.listeners.ConnectionListener;
@@ -35,6 +36,8 @@ public class PacketPlots extends JavaPlugin {
 
 		ConnectionListener.register();
 		PacketModifier.register();
+
+		this.getCommand("plot").setExecutor(new CommandPlot());
 	}
 
 	@Override

@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -18,6 +19,8 @@ import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
+import com.google.common.collect.Lists;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -26,10 +29,17 @@ import lombok.Getter;
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.config.PlotConfig.ChunkConfig;
 import net.dashmc.plots.data.IDataHolder;
+import net.dashmc.plots.utils.Utils;
+import net.minecraft.server.v1_8_R3.BlockPosition;
+import net.minecraft.server.v1_8_R3.Blocks;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
+import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.Packet;
+import net.minecraft.server.v1_8_R3.PacketListenerPlayIn;
 import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
+import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
+import net.minecraft.server.v1_8_R3.TileEntity;
 
 /*
  * Data structure:
@@ -41,6 +51,8 @@ import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
  */
 
 public class VirtualEnvironment implements IDataHolder {
+	public static boolean DEBUG = true;
+
 	private static final HashMap<Player, VirtualEnvironment> virtualEnvironments = new HashMap<>();
 	private static final HashMap<Class<?>, PacketModifier<?>> packetModifiers = new HashMap<>();
 
@@ -48,6 +60,7 @@ public class VirtualEnvironment implements IDataHolder {
 	private static final File DATA_DIRECTORY = new File(PacketPlots.getInstance().getDataFolder(), "data");
 
 	private @Getter HashMap<Integer, VirtualChunk> virtualChunks = new HashMap<>();
+	private @Getter final List<TileEntity> tileEntities = Lists.newArrayList();
 	private @Getter World world;
 	private @Getter UUID ownerUuid;
 
@@ -90,7 +103,7 @@ public class VirtualEnvironment implements IDataHolder {
 
 		for (ChunkConfig chunk : chunks) {
 			virtualChunks.put(chunk.coords.hashCode(),
-					new VirtualChunk(chunk.coords, nmsWorld, chunk.getSectionsAsMask()));
+					new VirtualChunk(this, chunk.coords, nmsWorld, chunk.getSectionsAsMask()));
 		}
 
 		save();
@@ -122,12 +135,21 @@ public class VirtualEnvironment implements IDataHolder {
 		togglePacketHandler(false);
 	}
 
-	/**
-	 * Simply stops the packet interceptor - doesn't send any new packets to
-	 * override the virtualized chunk for the player.
-	 */
 	public void stopVirtualization() {
 		togglePacketHandler(true);
+		getVirtualChunks().values().forEach((val) -> {
+			Packet<?> packet = new PacketPlayOutMapChunk(val.getChunk(), false, 65535);
+			getNMSOwner().playerConnection.sendPacket(packet);
+		});
+	}
+
+	public void startVirtualization() {
+		togglePacketHandler(false);
+		getVirtualChunks().values().forEach((val) -> {
+			getNMSOwner().playerConnection
+					.sendPacket(val.getPacket(65535, !((CraftWorld) world).getHandle().worldProvider.o(), false));
+
+		});
 	}
 
 	private void togglePacketHandler(boolean remove) {
@@ -142,6 +164,32 @@ public class VirtualEnvironment implements IDataHolder {
 		} else if (channel.pipeline().get(NETTY_PIPELINE_NAME) != null && remove) {
 			channel.pipeline().remove(NETTY_PIPELINE_NAME);
 		}
+	}
+
+	public IBlockData getType(BlockPosition pos) {
+		if (!isValidLocation(pos))
+			return Blocks.AIR.getBlockData();
+
+		VirtualChunk chunk = virtualChunks.get(Utils.getCoordHash(pos));
+		return chunk.getBlockData(pos);
+	}
+
+	public boolean setBlock(BlockPosition pos, IBlockData blockData, int i) {
+		if (!this.isValidLocation(pos))
+			return false;
+
+		VirtualChunk chunk = virtualChunks.get(Utils.getCoordHash(pos));
+		chunk.setBlock(pos, blockData);
+		return true;
+	}
+
+	private boolean isValidLocation(BlockPosition blockposition) {
+		if (!(blockposition.getX() >= -30000000 && blockposition.getZ() >= -30000000 && blockposition.getX() < 30000000
+				&& blockposition.getZ() < 30000000 && blockposition.getY() >= 0 && blockposition.getY() < 256))
+			return false;
+
+		int hash = Utils.getCoordHash(blockposition);
+		return virtualChunks.get(hash) != null;
 	}
 
 	public Player getOwner() {
@@ -175,7 +223,7 @@ public class VirtualEnvironment implements IDataHolder {
 		// Read in the saved chunks. If any of them aren't specified as virtual in the
 		// config any more discard them:
 		for (int i = 0; i < arraySize; i++) {
-			VirtualChunk chunk = new VirtualChunk(((CraftWorld) world).getHandle(), stream);
+			VirtualChunk chunk = new VirtualChunk(this, ((CraftWorld) world).getHandle(), stream);
 			if (!chunkCoordPairs.containsKey(chunk.getCoordPair()))
 				continue;
 
@@ -188,9 +236,15 @@ public class VirtualEnvironment implements IDataHolder {
 		// Fill the remaining spots, if any, with new virtual chunks
 		for (ChunkConfig chunk : chunkCoordPairs.values()) {
 			virtualChunks.put(chunk.coords.hashCode(),
-					new VirtualChunk(chunk.coords, nmsWorld, chunk.getSectionsAsMask()));
+					new VirtualChunk(this, chunk.coords, nmsWorld, chunk.getSectionsAsMask()));
 		}
+	}
 
+	public void setTileEntity(BlockPosition blockPosition, TileEntity tileEntity) {
+		if (tileEntity != null && !tileEntity.x()) {
+			tileEntities.add(tileEntity);
+			this.getVirtualChunks().get(Utils.getCoordHash(blockPosition)).setTileEntity(blockPosition, tileEntity);
+		}
 	}
 
 	@Override
@@ -234,8 +288,9 @@ public class VirtualEnvironment implements IDataHolder {
 		}
 
 		// Incomming
+		@SuppressWarnings("unchecked")
 		@Override
-		public void channelRead(ChannelHandlerContext chx, Object packet) throws Exception {
+		public void channelRead(ChannelHandlerContext chx, Object obj) throws Exception {
 			// Packets to pass to the env. if they occur there
 
 			// Interactions
@@ -244,6 +299,19 @@ public class VirtualEnvironment implements IDataHolder {
 			// Player Block Placement
 			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Player_Block_Placement)
 			// Update Sign (https://minecraft.wiki/w/Protocol?oldid=2772100#Update_Sign)
+			Packet<PacketListenerPlayIn> packet = (Packet<PacketListenerPlayIn>) obj;
+
+			if (DEBUG) {
+				try {
+					if (intercept(packet))
+						return;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else {
+				if (intercept(packet))
+					return;
+			}
 
 			super.channelRead(chx, packet);
 		}
