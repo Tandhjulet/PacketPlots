@@ -13,7 +13,7 @@ import net.dashmc.plots.commands.CommandPlot;
 import net.dashmc.plots.config.PlotConfig;
 import net.dashmc.plots.config.serializers.ChunkCoordPairSerializer;
 import net.dashmc.plots.listeners.ConnectionListener;
-import net.dashmc.plots.plot.PacketModifier;
+import net.dashmc.plots.packets.PacketModifier;
 
 public class PacketPlots extends JavaPlugin {
 

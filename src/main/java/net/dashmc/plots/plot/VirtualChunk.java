@@ -12,15 +12,12 @@ import java.util.Map;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.bukkit.Bukkit;
-import org.spigotmc.AsyncCatcher;
 
 import com.google.common.collect.Lists;
 
 import lombok.Getter;
 import net.dashmc.plots.data.IDataHolder;
-import net.dashmc.plots.plot.blocks.ChestHelper;
 import net.minecraft.server.v1_8_R3.Block;
-import net.minecraft.server.v1_8_R3.BlockChest;
 import net.minecraft.server.v1_8_R3.BlockContainer;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Blocks;
@@ -150,11 +147,7 @@ public class VirtualChunk implements IDataHolder {
 		}
 
 		if (block1 != block && block instanceof BlockContainer) {
-			if (block instanceof BlockChest) {
-				new ChestHelper(block).onPlace(environment, pos, blockData);
-			} else {
-				AsyncCatcher.catchOp("block onPlace");
-			}
+			VirtualBlock.onPlace(environment, pos, blockData);
 		}
 
 		if (block instanceof IContainer) {
@@ -295,7 +288,11 @@ public class VirtualChunk implements IDataHolder {
 		TileEntity tileEntity = tileEntities.get(pos);
 		if (tileEntity == null) {
 			if (entityState == EnumTileEntityState.IMMEDIATE) {
-				throw new NotImplementedException();
+				Block block = this.getType(pos);
+
+				tileEntity = block.isTileEntity() ? ((IContainer) block).a(this.world, getBlockAsLegacyData(pos))
+						: null;
+				environment.setTileEntity(pos, tileEntity);
 			} else if (entityState == EnumTileEntityState.QUEUED)
 				throw new NotImplementedException();
 		} else if (tileEntity.x()) {
@@ -304,6 +301,15 @@ public class VirtualChunk implements IDataHolder {
 		}
 
 		return tileEntity;
+	}
+
+	public int getBlockAsLegacyData(BlockPosition blockposition) {
+		IBlockData blockData = getBlockData(blockposition);
+		return blockData.getBlock().toLegacyData(blockData);
+	}
+
+	public Block getType(BlockPosition pos) {
+		return getBlockData(pos).getBlock();
 	}
 
 	public IBlockData getBlockData(BlockPosition pos) {

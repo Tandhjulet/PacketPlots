@@ -1,10 +1,11 @@
-package net.dashmc.plots.plot;
+package net.dashmc.plots.packets;
 
-import net.dashmc.plots.plot.modifiers.BlockDigPacketModifier;
-import net.dashmc.plots.plot.modifiers.BlockPlacementPacketModifier;
-import net.dashmc.plots.plot.modifiers.MapChunkBulkPacketModifier;
-import net.dashmc.plots.plot.modifiers.MapChunkPacketModifier;
-import net.dashmc.plots.plot.modifiers.UseEntityPacketModifier;
+import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.packets.modifiers.BlockDigPacketModifier;
+import net.dashmc.plots.packets.modifiers.BlockPlacementPacketModifier;
+import net.dashmc.plots.packets.modifiers.MapChunkBulkPacketModifier;
+import net.dashmc.plots.packets.modifiers.MapChunkPacketModifier;
+import net.dashmc.plots.packets.modifiers.UseEntityPacketModifier;
 import net.minecraft.server.v1_8_R3.Packet;
 
 public abstract class PacketModifier<T extends Packet<?>> {

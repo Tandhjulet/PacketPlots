@@ -1,8 +1,8 @@
-package net.dashmc.plots.plot.modifiers;
+package net.dashmc.plots.packets.modifiers;
 
 import org.bukkit.Bukkit;
 
-import net.dashmc.plots.plot.PacketModifier;
+import net.dashmc.plots.packets.PacketModifier;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.minecraft.server.v1_8_R3.PacketPlayInUseEntity;
 

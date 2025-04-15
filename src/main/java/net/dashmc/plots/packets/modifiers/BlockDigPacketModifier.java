@@ -1,9 +1,9 @@
-package net.dashmc.plots.plot.modifiers;
+package net.dashmc.plots.packets.modifiers;
 
 import org.bukkit.GameMode;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 
-import net.dashmc.plots.plot.PacketModifier;
+import net.dashmc.plots.packets.PacketModifier;
 import net.dashmc.plots.plot.VirtualChunk;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Utils;
