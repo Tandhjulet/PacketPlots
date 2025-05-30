@@ -23,7 +23,7 @@ public class BlockPlacementPacketModifier extends PacketModifier<PacketPlayInBlo
 		if (virtualChunk == null)
 			return false;
 
-		environment.getVirtualConnection().onBlockPlace(packet);
+		environment.getInteractManager().handlePlace(packet);
 		return true;
 	}
 

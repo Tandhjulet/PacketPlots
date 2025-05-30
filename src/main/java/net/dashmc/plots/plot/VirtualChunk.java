@@ -105,23 +105,23 @@ public class VirtualChunk implements IDataHolder {
 		if (pos.getX() >> 4 != chunk.locX || pos.getZ() >> 4 != chunk.locZ) {
 			Bukkit.getLogger().warning(
 					"setBlock called on VirtualChunk even though the reference position was not in the virtualized chunk.");
-			return true;
+			return false;
 		} else if ((allowedSections & 1 << yPos) == 0) {
 			Bukkit.getLogger().warning(
 					"setBlock called on VirtualChunk even though the reference position was not in the virtualized section.");
-			return true;
+			return false;
 		}
 
 		IBlockData currentBlock = getBlockData(pos);
 		if (currentBlock == blockData)
-			return true;
+			return false;
 
 		Block block1 = currentBlock.getBlock();
 		Block block = blockData.getBlock();
 		Section section = sections[yPos];
 		if (section == null) {
 			if (block == Blocks.AIR)
-				return true;
+				return false;
 
 			ChunkSection chunkSection = chunk.getSections()[yPos];
 			if (chunkSection == null)
@@ -138,7 +138,7 @@ public class VirtualChunk implements IDataHolder {
 		}
 
 		if (section.getBlock(relX, (byte) (pos.getY() & 15), relZ) != block)
-			return true;
+			return false;
 
 		if (block1 instanceof IContainer) {
 			TileEntity tileEntity = getTileEntity(pos, EnumTileEntityState.CHECK);

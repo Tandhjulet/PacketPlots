@@ -3,9 +3,8 @@ package net.dashmc.plots.plot;
 import java.util.HashMap;
 import java.util.function.BiFunction;
 
-import org.spigotmc.AsyncCatcher;
-
 import net.dashmc.plots.plot.blocks.VirtualChestBlock;
+import net.dashmc.plots.plot.blocks.VirtualDirtBlock;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.EntityHuman;
@@ -22,11 +21,9 @@ public abstract class VirtualBlock<T extends Block> {
 			EntityHuman entityhuman, EnumDirection enumdirection, float f, float f1, float f2);
 
 	public void onPlace(T block, VirtualEnvironment environment, BlockPosition pos, IBlockData blockData) {
-		AsyncCatcher.catchOp("block onPlace");
 	}
 
 	public void remove(T block, VirtualEnvironment environment, BlockPosition pos, IBlockData blockData) {
-		AsyncCatcher.catchOp("block remove");
 	}
 
 	public boolean canPlace(T block, VirtualEnvironment environment, BlockPosition pos, EnumDirection direction,
@@ -133,6 +130,7 @@ public abstract class VirtualBlock<T extends Block> {
 
 	static {
 		new VirtualChestBlock().register();
+		new VirtualDirtBlock().register();
 	}
 
 }
