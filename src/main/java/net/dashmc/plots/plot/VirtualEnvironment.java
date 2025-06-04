@@ -14,11 +14,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockCanBuildEvent;
 
 import com.google.common.collect.Lists;
@@ -31,10 +34,14 @@ import lombok.Getter;
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.config.PlotConfig.ChunkConfig;
 import net.dashmc.plots.data.IDataHolder;
+import net.dashmc.plots.events.VirtualInteractEvent;
 import net.dashmc.plots.packets.PacketModifier;
+import net.dashmc.plots.packets.extensions.VirtualBlockChangePacket;
 import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import net.minecraft.server.v1_8_R3.Block;
+import net.minecraft.server.v1_8_R3.BlockCommand;
+import net.minecraft.server.v1_8_R3.BlockDoor;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Blocks;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
@@ -43,12 +50,13 @@ import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.EnumDirection;
 import net.minecraft.server.v1_8_R3.IBlockData;
+import net.minecraft.server.v1_8_R3.IInventory;
+import net.minecraft.server.v1_8_R3.ITileInventory;
 import net.minecraft.server.v1_8_R3.ItemStack;
 import net.minecraft.server.v1_8_R3.Material;
 import net.minecraft.server.v1_8_R3.Packet;
 import net.minecraft.server.v1_8_R3.PacketListenerPlayIn;
 import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
-import net.minecraft.server.v1_8_R3.PacketPlayInBlockPlace;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_8_R3.TileEntity;
 import net.minecraft.server.v1_8_R3.Chunk.EnumTileEntityState;
@@ -63,8 +71,6 @@ import net.minecraft.server.v1_8_R3.Chunk.EnumTileEntityState;
  */
 
 public class VirtualEnvironment implements IDataHolder {
-	public static boolean DEBUG = true;
-
 	private static final HashMap<Player, VirtualEnvironment> virtualEnvironments = new HashMap<>();
 	private static final HashMap<Class<?>, PacketModifier<?>> packetModifiers = new HashMap<>();
 
@@ -362,28 +368,73 @@ public class VirtualEnvironment implements IDataHolder {
 			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Player_Block_Placement)
 			// Update Sign (https://minecraft.wiki/w/Protocol?oldid=2772100#Update_Sign)
 			Packet<PacketListenerPlayIn> packet = (Packet<PacketListenerPlayIn>) obj;
-
-			if (DEBUG) {
-				try {
-					if (intercept(packet))
-						return;
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			} else {
-				if (intercept(packet))
-					return;
-			}
+			if (intercept(packet))
+				return;
 
 			super.channelRead(chx, packet);
+		}
+
+		@Override
+		public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+			System.err.println("Netty pipeline exception: " + cause);
+			cause.printStackTrace();
+			super.exceptionCaught(ctx, cause);
 		}
 	}
 
 	public class InteractManager {
-		public void handlePlace(PacketPlayInBlockPlace packet) {
-			BlockPosition pos = packet.a();
-			ItemStack itemStack = packet.getItemStack();
+		public boolean interact(EntityHuman human, VirtualEnvironment env, ItemStack item, BlockPosition pos,
+				EnumDirection dir, float cX, float cY, float cZ) {
+			IBlockData blockData = env.getType(pos);
+			boolean result = false;
+			if (blockData.getBlock() != Blocks.AIR) {
+				boolean cancelledBlock = false;
+				GameMode gameMode = getOwner().getGameMode();
 
+				if (gameMode == GameMode.SPECTATOR) {
+					TileEntity tile = env.getTileEntity(pos);
+					cancelledBlock = !(tile instanceof ITileInventory || tile instanceof IInventory);
+				}
+
+				if (!human.getBukkitEntity().isOp() && item != null
+						&& Block.asBlock(item.getItem()) instanceof BlockCommand) {
+					cancelledBlock = true;
+				}
+
+				VirtualInteractEvent ev = new VirtualInteractEvent(human, Action.RIGHT_CLICK_BLOCK, pos, dir, item,
+						cancelledBlock);
+				if (cancelledBlock)
+					ev.setUseClickedBlock(Event.Result.DENY);
+				Bukkit.getPluginManager().callEvent(ev);
+
+				if (ev.getUseClickedBlock() == Event.Result.DENY) {
+					if (blockData.getBlock() instanceof BlockDoor) {
+						boolean bottom = blockData.get(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.LOWER;
+						((EntityPlayer) human).playerConnection
+								.sendPacket(
+										new VirtualBlockChangePacket(env, bottom ? pos.up() : pos.down()).getPacket());
+					}
+					result = ev.getUseItemInHand() != Event.Result.ALLOW;
+				} else if (gameMode == GameMode.SPECTATOR) {
+					// TODO: implement
+				} else if (!human.isSneaking() || item == null) {
+					result = VirtualBlock.interact(env, pos, blockData, human, dir, cX, cY, cZ);
+				}
+
+				if (item != null && !result) {
+					int data = item.getData();
+					int count = item.count;
+
+					result = VirtualItem.placeItem(item, human, env, pos, dir, cX, cY, cZ);
+
+					if (gameMode == GameMode.CREATIVE) {
+						item.setData(data);
+						item.count = count;
+					}
+				}
+			}
+
+			return result;
 		}
 	}
 
