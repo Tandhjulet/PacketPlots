@@ -25,7 +25,9 @@ public class VirtualItemBlock extends VirtualItem<ItemBlock> {
 		if (!VirtualBlock.shouldRemainAt(block, environment, pos))
 			pos = pos.shift(direction);
 
-		Debug.log("Trying to place at " + pos.toString() + " (" + block.toString() + ")");
+		Block toPlace = ((ItemBlock) item.getItem()).d();
+		Debug.log(
+				"Trying to place at " + pos.toString() + " ( " + toPlace.toString() + " on " + block.toString() + " )");
 
 		if (item.count == 0)
 			return false;
@@ -36,7 +38,6 @@ public class VirtualItemBlock extends VirtualItem<ItemBlock> {
 
 		Debug.log("Can place!");
 
-		Block toPlace = ((ItemBlock) item.getItem()).d();
 		if (!environment.isBuildable(toPlace, pos, false, direction, player, item))
 			return false;
 

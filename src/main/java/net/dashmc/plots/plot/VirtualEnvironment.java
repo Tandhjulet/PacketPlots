@@ -22,7 +22,6 @@ import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.block.BlockCanBuildEvent;
 
 import com.google.common.collect.Lists;
 
@@ -46,6 +45,7 @@ import net.minecraft.server.v1_8_R3.BlockCommand;
 import net.minecraft.server.v1_8_R3.BlockDoor;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Blocks;
+import net.minecraft.server.v1_8_R3.Chunk.EnumTileEntityState;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.Entity;
 import net.minecraft.server.v1_8_R3.EntityHuman;
@@ -61,7 +61,6 @@ import net.minecraft.server.v1_8_R3.PacketListenerPlayIn;
 import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_8_R3.TileEntity;
-import net.minecraft.server.v1_8_R3.Chunk.EnumTileEntityState;
 
 /*
  * Data structure:
@@ -158,7 +157,8 @@ public class VirtualEnvironment implements IDataHolder {
 			defaultReturn = true;
 		} else {
 			Debug.log("isReplaceable: " + curr.getMaterial().isReplaceable());
-			Debug.log("mayPlace: " + VirtualBlock.mayPlace(block, this, pos, dir, itemStack));
+			Debug.log("mayPlace: " + VirtualBlock.mayPlace(block, this, pos, dir, itemStack) + " (pos: "
+					+ pos.toString() + ")");
 
 			defaultReturn = curr.getMaterial().isReplaceable()
 					&& VirtualBlock.mayPlace(block, this, pos, dir, itemStack);
@@ -282,7 +282,11 @@ public class VirtualEnvironment implements IDataHolder {
 			return false;
 
 		int hash = Utils.getChunkCoordHash(blockposition);
-		return virtualChunks.get(hash) != null;
+		VirtualChunk chunk = virtualChunks.get(hash);
+		if (chunk == null)
+			return false;
+
+		return chunk.isSectionSet((byte) (blockposition.getY() >> 4));
 	}
 
 	public Player getOwner() {

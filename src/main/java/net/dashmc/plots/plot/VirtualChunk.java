@@ -97,6 +97,10 @@ public class VirtualChunk implements IDataHolder {
 		}
 	}
 
+	public boolean isSectionSet(byte sectionIndex) {
+		return (sectionMask & (1 << sectionIndex)) > 0;
+	}
+
 	public boolean setBlock(BlockPosition pos, IBlockData blockData) {
 		byte relX = (byte) (pos.getX() & 15);
 		byte relZ = (byte) (pos.getZ() & 15);

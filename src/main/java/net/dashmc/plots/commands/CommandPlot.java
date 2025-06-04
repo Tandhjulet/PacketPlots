@@ -26,6 +26,7 @@ public class CommandPlot implements CommandExecutor {
 			player.sendMessage("/plot virtualize <on/off>");
 			return true;
 		}
+
 		if (args[1].equals("on")) {
 			VirtualEnvironment.get(player).startVirtualization();
 			player.sendMessage("Toggled plot virtualization on!");

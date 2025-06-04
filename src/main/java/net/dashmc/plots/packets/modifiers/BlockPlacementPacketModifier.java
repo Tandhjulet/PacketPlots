@@ -13,7 +13,6 @@ import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.EnumDirection;
-import net.minecraft.server.v1_8_R3.ItemBlock;
 import net.minecraft.server.v1_8_R3.ItemStack;
 import net.minecraft.server.v1_8_R3.PacketPlayInBlockPlace;
 import net.minecraft.server.v1_8_R3.PacketPlayOutSetSlot;
@@ -101,23 +100,6 @@ public class BlockPlacementPacketModifier extends PacketModifier<PacketPlayInBlo
 		}
 
 		return true;
-	}
-
-	private BlockPosition offset(BlockPosition toOffset, int face) {
-		if (face == 0)
-			return toOffset.down();
-		else if (face == 1)
-			return toOffset.up();
-		else if (face == 2)
-			return toOffset.north();
-		else if (face == 3)
-			return toOffset.south();
-		else if (face == 4)
-			return toOffset.west();
-		else if (face == 5)
-			toOffset.east();
-
-		return toOffset;
 	}
 
 	@Override

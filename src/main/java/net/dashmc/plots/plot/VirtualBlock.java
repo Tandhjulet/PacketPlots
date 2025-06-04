@@ -80,7 +80,7 @@ public abstract class VirtualBlock<T extends Block> {
 			BlockPosition pos, EnumDirection direction, ItemStack itemStack) {
 		return getAndRun(toPlace, (BiFunction<VirtualBlock<T>, T, Boolean>) (virtualBlock, block) -> {
 			if (virtualBlock == null || block == null)
-				return false;
+				return environment.getType(pos).getBlock().getMaterial().isReplaceable();
 			return virtualBlock.canPlace(block, environment, pos, direction, itemStack);
 		});
 	}

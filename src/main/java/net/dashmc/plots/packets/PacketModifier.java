@@ -6,6 +6,7 @@ import net.dashmc.plots.packets.modifiers.BlockPlacementPacketModifier;
 import net.dashmc.plots.packets.modifiers.MapChunkBulkPacketModifier;
 import net.dashmc.plots.packets.modifiers.MapChunkPacketModifier;
 import net.dashmc.plots.packets.modifiers.UseEntityPacketModifier;
+import net.dashmc.plots.packets.modifiers.WindowClosePacketModifier;
 import net.minecraft.server.v1_8_R3.Packet;
 
 public abstract class PacketModifier<T extends Packet<?>> {
@@ -22,5 +23,6 @@ public abstract class PacketModifier<T extends Packet<?>> {
 		BlockDigPacketModifier.register();
 		BlockPlacementPacketModifier.register();
 		UseEntityPacketModifier.register();
+		WindowClosePacketModifier.register();
 	}
 }
