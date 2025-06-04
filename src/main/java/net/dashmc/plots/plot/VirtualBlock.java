@@ -3,6 +3,7 @@ package net.dashmc.plots.plot;
 import java.util.HashMap;
 import java.util.function.BiFunction;
 
+import net.dashmc.plots.plot.blocks.VirtualBlockAir;
 import net.dashmc.plots.plot.blocks.VirtualChestBlock;
 import net.dashmc.plots.plot.blocks.VirtualDirtBlock;
 import net.minecraft.server.v1_8_R3.Block;
@@ -39,6 +40,10 @@ public abstract class VirtualBlock<T extends Block> {
 		return environment.getType(pos).getBlock().getMaterial().isReplaceable();
 	}
 
+	public boolean shouldRemainAt(VirtualEnvironment env, BlockPosition pos) {
+		return false;
+	}
+
 	public void postPlace(T block, VirtualEnvironment environment, BlockPosition blockposition, IBlockData iblockdata,
 			EntityLiving entityliving, ItemStack itemstack) {
 	}
@@ -59,6 +64,15 @@ public abstract class VirtualBlock<T extends Block> {
 			return virtualBlock.interact(
 					block, environment, blockposition, iblockdata, entityhuman,
 					enumdirection, f, f1, f2);
+		});
+	}
+
+	public static final <T extends Block> boolean shouldRemainAt(Block block, VirtualEnvironment env,
+			BlockPosition position) {
+		return getAndRun(block, (BiFunction<VirtualBlock<T>, T, Boolean>) (virtualBlock, actualBlock) -> {
+			if (virtualBlock == null || block == null)
+				return false;
+			return virtualBlock.shouldRemainAt(env, position);
 		});
 	}
 
@@ -129,6 +143,7 @@ public abstract class VirtualBlock<T extends Block> {
 	}
 
 	static {
+		new VirtualBlockAir().register();
 		new VirtualChestBlock().register();
 		new VirtualDirtBlock().register();
 	}

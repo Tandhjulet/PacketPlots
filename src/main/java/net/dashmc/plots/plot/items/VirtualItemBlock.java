@@ -22,9 +22,10 @@ public class VirtualItemBlock extends VirtualItem<ItemBlock> {
 		IBlockData ibd = environment.getType(pos);
 		Block block = ibd.getBlock();
 
-		pos = pos.shift(direction);
+		if (!VirtualBlock.shouldRemainAt(block, environment, pos))
+			pos = pos.shift(direction);
 
-		Debug.log("Trying to place at " + pos.toString());
+		Debug.log("Trying to place at " + pos.toString() + " (" + block.toString() + ")");
 
 		if (item.count == 0)
 			return false;
@@ -35,12 +36,11 @@ public class VirtualItemBlock extends VirtualItem<ItemBlock> {
 
 		Debug.log("Can place!");
 
-		if (!environment.isBuildable(block, pos, false, direction, player, item))
+		Block toPlace = ((ItemBlock) item.getItem()).d();
+		if (!environment.isBuildable(toPlace, pos, false, direction, player, item))
 			return false;
 
 		Debug.log("Is buildable!");
-
-		Block toPlace = ((ItemBlock) item.getItem()).d();
 
 		int data = item.getItem().filterData(item.getData());
 		IBlockData placedBlockData = toPlace.getPlacedState(null, pos, direction, cX, cY, cZ, data, player);
