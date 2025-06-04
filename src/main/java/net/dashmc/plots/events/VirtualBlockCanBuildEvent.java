@@ -2,23 +2,18 @@ package net.dashmc.plots.events;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import net.dashmc.plots.plot.VirtualEnvironment;
 
 @Getter
 @RequiredArgsConstructor
-public class VirtualBlockPlaceEvent extends Event implements Cancellable {
-	@Setter
-	private boolean cancelled = false;
-	private final Player player;
-	private final Location placedAt;
+public class VirtualBlockCanBuildEvent extends Event {
+	private final boolean buildable;
+	private final Location location;
 	private final Material material;
 	private final VirtualEnvironment environment;
 
@@ -32,5 +27,4 @@ public class VirtualBlockPlaceEvent extends Event implements Cancellable {
 	public static HandlerList getHandlerList() {
 		return handlers;
 	}
-
 }

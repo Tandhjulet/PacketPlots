@@ -6,9 +6,15 @@ import java.util.function.BiFunction;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftHumanEntity;
 import org.bukkit.entity.Player;
 
+import lombok.Getter;
 import net.dashmc.plots.events.VirtualBlockPlaceEvent;
+import net.dashmc.plots.plot.items.VirtualItemBlock;
+import net.dashmc.plots.plot.items.VirtualItemMultiTexture;
+import net.dashmc.plots.utils.Debug;
+import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockContainer;
 import net.minecraft.server.v1_8_R3.BlockPosition;
@@ -19,6 +25,7 @@ import net.minecraft.server.v1_8_R3.Item;
 import net.minecraft.server.v1_8_R3.ItemStack;
 
 public abstract class VirtualItem<T extends Item> {
+	@Getter
 	private static HashMap<Class<? extends Item>, VirtualItem<? extends Item>> virtualItems = new HashMap<>();
 
 	/**
@@ -60,7 +67,7 @@ public abstract class VirtualItem<T extends Item> {
 
 	public static final <T extends Item> boolean placeItem(ItemStack itemStack, EntityHuman entityhuman,
 			VirtualEnvironment env, BlockPosition clicked, EnumDirection dir, float cX, float cY, float cZ) {
-		Player player = (Player) entityhuman;
+		CraftHumanEntity player = entityhuman.getBukkitEntity();
 
 		return getAndRun(itemStack.getItem(), (BiFunction<VirtualItem<T>, T, Boolean>) (virtualItem, actualItem) -> {
 			if (actualItem == null || virtualItem == null)
@@ -69,11 +76,11 @@ public abstract class VirtualItem<T extends Item> {
 			int data = itemStack.getData();
 			int count = itemStack.count;
 			BlockPosition placedAt = clicked.shift(dir);
-			Location bukkitPlacedAt = new Location(player.getWorld(), placedAt.getX(), placedAt.getY(),
-					placedAt.getZ());
+			Location bukkitPlacedAt = Utils.convertPosToLoc(env.getWorld(), clicked);
 
 			IBlockData prevBlockData = env.getType(placedAt);
 			boolean flag = virtualItem.interactWith(itemStack, entityhuman, env, clicked, dir, cX, cY, cZ);
+			Debug.log("Interact with flag: " + flag);
 
 			int newData = itemStack.getData();
 			int newCount = itemStack.count;
@@ -86,7 +93,7 @@ public abstract class VirtualItem<T extends Item> {
 				@SuppressWarnings("deprecation")
 				Material mat = Material.getMaterial(Block.getId(newBlockData.getBlock()));
 
-				VirtualBlockPlaceEvent ev = new VirtualBlockPlaceEvent(player, bukkitPlacedAt, mat);
+				VirtualBlockPlaceEvent ev = new VirtualBlockPlaceEvent((Player) player, bukkitPlacedAt, mat, env);
 				Bukkit.getPluginManager().callEvent(ev);
 
 				if (ev.isCancelled()) {
@@ -99,7 +106,7 @@ public abstract class VirtualItem<T extends Item> {
 					}
 
 					if (!(newBlockData instanceof BlockContainer)) {
-						VirtualBlock.onPlace(env, clicked, newBlockData);
+						VirtualBlock.onPlace(env, placedAt, newBlockData);
 					}
 
 				}
@@ -114,7 +121,8 @@ public abstract class VirtualItem<T extends Item> {
 	}
 
 	static {
-
+		new VirtualItemBlock().register();
+		new VirtualItemMultiTexture().register();
 	}
 
 }

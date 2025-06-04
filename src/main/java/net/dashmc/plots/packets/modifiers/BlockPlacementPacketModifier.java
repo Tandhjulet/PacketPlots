@@ -8,6 +8,7 @@ import net.dashmc.plots.packets.PacketModifier;
 import net.dashmc.plots.packets.extensions.VirtualBlockChangePacket;
 import net.dashmc.plots.plot.VirtualChunk;
 import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.utils.Debug;
 import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
@@ -25,8 +26,9 @@ public class BlockPlacementPacketModifier extends PacketModifier<PacketPlayInBlo
 	@Override
 	public boolean modify(PacketPlayInBlockPlace packet, VirtualEnvironment environment) {
 		BlockPosition pos = packet.a();
-		if (packet.getItemStack() != null && packet.getItemStack().getItem() instanceof ItemBlock)
-			pos = offset(pos, packet.getFace());
+		// if (packet.getItemStack() != null && packet.getItemStack().getItem()
+		// instanceof ItemBlock)
+		// pos = offset(pos, packet.getFace());
 
 		VirtualChunk virtualChunk = environment.getVirtualChunks()
 				.get(Utils.getCoordHash(pos.getX() >> 4, pos.getZ() >> 4));
@@ -49,12 +51,20 @@ public class BlockPlacementPacketModifier extends PacketModifier<PacketPlayInBlo
 			// above build limit
 			return true;
 		} else {
+			Debug.log("Inside packet modifier interact handler");
+
 			Location eyeLoc = player.getBukkitEntity().getEyeLocation();
 			double reachDist = NumberConversions.square(eyeLoc.getX() - pos.getX())
 					+ NumberConversions.square(eyeLoc.getY() - pos.getY())
 					+ NumberConversions.square(eyeLoc.getZ() - pos.getZ());
+
+			Debug.log("Reach dist: " + reachDist);
+
 			if (reachDist > (player.getBukkitEntity().getGameMode() == GameMode.CREATIVE ? 7 * 7 : 6 * 6))
 				return true;
+
+			Debug.log("Distance from block: "
+					+ player.e((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D));
 
 			if (player.e((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D) < 64D) {
 				always = environment.getInteractManager().interact(player, environment, inHand, pos, dir, packet.d(),

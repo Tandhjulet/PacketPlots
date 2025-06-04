@@ -3,6 +3,7 @@ package net.dashmc.plots.plot.items;
 import net.dashmc.plots.plot.VirtualBlock;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.plot.VirtualItem;
+import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.EntityHuman;
@@ -23,12 +24,21 @@ public class VirtualItemBlock extends VirtualItem<ItemBlock> {
 
 		pos = pos.shift(direction);
 
+		Debug.log("Trying to place at " + pos.toString());
+
 		if (item.count == 0)
 			return false;
+		Debug.log("Item count > 0");
+
 		if (!environment.canPlace(pos, direction, item, player))
 			return false;
+
+		Debug.log("Can place!");
+
 		if (!environment.isBuildable(block, pos, false, direction, player, item))
 			return false;
+
+		Debug.log("Is buildable!");
 
 		Block toPlace = ((ItemBlock) item.getItem()).d();
 

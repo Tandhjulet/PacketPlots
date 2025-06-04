@@ -34,9 +34,11 @@ import lombok.Getter;
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.config.PlotConfig.ChunkConfig;
 import net.dashmc.plots.data.IDataHolder;
+import net.dashmc.plots.events.VirtualBlockCanBuildEvent;
 import net.dashmc.plots.events.VirtualInteractEvent;
 import net.dashmc.plots.packets.PacketModifier;
 import net.dashmc.plots.packets.extensions.VirtualBlockChangePacket;
+import net.dashmc.plots.utils.Debug;
 import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import net.minecraft.server.v1_8_R3.Block;
@@ -131,18 +133,41 @@ public class VirtualEnvironment implements IDataHolder {
 		togglePacketHandler(false);
 	}
 
+	/**
+	 * Not yet implemented - entities arent supported
+	 * 
+	 * @param bb
+	 * @param entity
+	 * @return
+	 */
+	public boolean isNoOtherEntitiesInside(AxisAlignedBB bb, Entity entity) {
+		return true;
+	}
+
 	// https://github.com/Attano/Spigot-1.8/blob/9db48bc15e203179554b8d992ca6b0a528c8d300/net/minecraft/server/v1_8_R3/World.java#L2664
 	public boolean isBuildable(Block block, BlockPosition pos, boolean hasBoundingBox, EnumDirection dir, Entity entity,
 			ItemStack itemStack) {
 		Block curr = getType(pos).getBlock();
 		AxisAlignedBB bb = hasBoundingBox ? null
-				: block.a((net.minecraft.server.v1_8_R3.World) null, pos, (IBlockData) null);
+				: block.a((net.minecraft.server.v1_8_R3.World) null, pos, curr.getBlockData());
 
-		boolean defaultReturn = bb != null && (curr.getMaterial() == Material.ORIENTABLE && block == Blocks.ANVIL
-				|| curr.getMaterial().isReplaceable() && VirtualBlock.mayPlace(block, this, pos, dir, itemStack));
+		final boolean defaultReturn;
+		if (bb != null && !isNoOtherEntitiesInside(bb, entity)) {
+			defaultReturn = false;
+		} else if (curr.getMaterial() == Material.ORIENTABLE && block == Blocks.ANVIL) {
+			defaultReturn = true;
+		} else {
+			Debug.log("isReplaceable: " + curr.getMaterial().isReplaceable());
+			Debug.log("mayPlace: " + VirtualBlock.mayPlace(block, this, pos, dir, itemStack));
+
+			defaultReturn = curr.getMaterial().isReplaceable()
+					&& VirtualBlock.mayPlace(block, this, pos, dir, itemStack);
+		}
+
 		@SuppressWarnings("deprecation")
-		BlockCanBuildEvent event = new BlockCanBuildEvent(getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ()),
-				CraftMagicNumbers.getId(curr), defaultReturn);
+		VirtualBlockCanBuildEvent event = new VirtualBlockCanBuildEvent(defaultReturn,
+				Utils.convertPosToLoc(world, pos), org.bukkit.Material.getMaterial(CraftMagicNumbers.getId(curr)),
+				this);
 		Bukkit.getPluginManager().callEvent(event);
 
 		return event.isBuildable();
@@ -219,7 +244,7 @@ public class VirtualEnvironment implements IDataHolder {
 		if (!isValidLocation(pos))
 			return Blocks.AIR.getBlockData();
 
-		VirtualChunk chunk = virtualChunks.get(Utils.getCoordHash(pos));
+		VirtualChunk chunk = virtualChunks.get(Utils.getChunkCoordHash(pos));
 		return chunk.getBlockData(pos);
 	}
 
@@ -227,7 +252,7 @@ public class VirtualEnvironment implements IDataHolder {
 		if (!isValidLocation(pos))
 			return null;
 
-		TileEntity tileEntity = virtualChunks.get(Utils.getCoordHash(pos)).getTileEntity(pos,
+		TileEntity tileEntity = virtualChunks.get(Utils.getChunkCoordHash(pos)).getTileEntity(pos,
 				EnumTileEntityState.IMMEDIATE);
 		if (tileEntity == null) {
 			for (int i = 0; i < tileEntities.size(); i++) {
@@ -246,7 +271,7 @@ public class VirtualEnvironment implements IDataHolder {
 		if (!this.isValidLocation(pos))
 			return false;
 
-		VirtualChunk chunk = virtualChunks.get(Utils.getCoordHash(pos));
+		VirtualChunk chunk = virtualChunks.get(Utils.getChunkCoordHash(pos));
 		boolean succeeded = chunk.setBlock(pos, blockData);
 		return succeeded;
 	}
@@ -256,7 +281,7 @@ public class VirtualEnvironment implements IDataHolder {
 				&& blockposition.getZ() < 30000000 && blockposition.getY() >= 0 && blockposition.getY() < 256))
 			return false;
 
-		int hash = Utils.getCoordHash(blockposition);
+		int hash = Utils.getChunkCoordHash(blockposition);
 		return virtualChunks.get(hash) != null;
 	}
 
@@ -311,7 +336,8 @@ public class VirtualEnvironment implements IDataHolder {
 	public void setTileEntity(BlockPosition blockPosition, TileEntity tileEntity) {
 		if (tileEntity != null && !tileEntity.x()) {
 			tileEntities.add(tileEntity);
-			this.getVirtualChunks().get(Utils.getCoordHash(blockPosition)).setTileEntity(blockPosition, tileEntity);
+			this.getVirtualChunks().get(Utils.getChunkCoordHash(blockPosition)).setTileEntity(blockPosition,
+					tileEntity);
 		}
 	}
 
@@ -387,6 +413,11 @@ public class VirtualEnvironment implements IDataHolder {
 				EnumDirection dir, float cX, float cY, float cZ) {
 			IBlockData blockData = env.getType(pos);
 			boolean result = false;
+
+			Debug.log("Interact position: " + pos.toString() + " (dir " + dir.toString() + ")");
+			Debug.log("Interact IBD:" + blockData.getBlock().toString());
+			Debug.log("Block is not air?: " + (blockData.getBlock() != Blocks.AIR));
+
 			if (blockData.getBlock() != Blocks.AIR) {
 				boolean cancelledBlock = false;
 				GameMode gameMode = getOwner().getGameMode();
@@ -402,7 +433,7 @@ public class VirtualEnvironment implements IDataHolder {
 				}
 
 				VirtualInteractEvent ev = new VirtualInteractEvent(human, Action.RIGHT_CLICK_BLOCK, pos, dir, item,
-						cancelledBlock);
+						cancelledBlock, env);
 				if (cancelledBlock)
 					ev.setUseClickedBlock(Event.Result.DENY);
 				Bukkit.getPluginManager().callEvent(ev);
@@ -421,9 +452,14 @@ public class VirtualEnvironment implements IDataHolder {
 					result = VirtualBlock.interact(env, pos, blockData, human, dir, cX, cY, cZ);
 				}
 
+				Debug.log("Item is not null: " + (item != null));
+				Debug.log("Result is: " + result);
+
 				if (item != null && !result) {
 					int data = item.getData();
 					int count = item.count;
+
+					Debug.log("Placing item " + item.getItem().getName() + " (" + item.getItem().getClass() + ")");
 
 					result = VirtualItem.placeItem(item, human, env, pos, dir, cX, cY, cZ);
 

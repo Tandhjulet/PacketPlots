@@ -14,6 +14,8 @@ import org.bukkit.event.block.Action;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EnumDirection;
@@ -27,6 +29,7 @@ public class VirtualInteractEvent extends Event implements Cancellable {
 	private final Location location;
 	private final Action action;
 	private final BlockFace face;
+	private final VirtualEnvironment environment;
 
 	@Setter
 	private Result useClickedBlock;
@@ -34,7 +37,8 @@ public class VirtualInteractEvent extends Event implements Cancellable {
 	private Result useItemInHand;
 
 	public VirtualInteractEvent(EntityHuman who, Action action, BlockPosition pos, EnumDirection dir, ItemStack item,
-			boolean cancelledBlock) {
+			boolean cancelledBlock, VirtualEnvironment env) {
+		this.environment = env;
 		this.player = (Player) who.getBukkitEntity();
 		CraftItemStack itemInHand = CraftItemStack.asCraftMirror(item);
 		this.face = CraftBlock.notchToBlockFace(dir);
@@ -43,7 +47,7 @@ public class VirtualInteractEvent extends Event implements Cancellable {
 			itemInHand = null;
 		this.itemInHand = itemInHand;
 		this.action = action;
-		this.location = new Location(player.getWorld(), pos.getX(), pos.getY(), pos.getZ());
+		this.location = Utils.convertPosToLoc(env.getWorld(), pos);
 	}
 
 	public void setCancelled(boolean cancel) {
