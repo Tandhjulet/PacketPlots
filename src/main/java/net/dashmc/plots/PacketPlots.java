@@ -2,7 +2,9 @@ package net.dashmc.plots;
 
 import java.io.File;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import eu.okaeri.configs.ConfigManager;
@@ -14,6 +16,7 @@ import net.dashmc.plots.config.PlotConfig;
 import net.dashmc.plots.config.serializers.ChunkCoordPairSerializer;
 import net.dashmc.plots.listeners.ConnectionListener;
 import net.dashmc.plots.packets.PacketModifier;
+import net.dashmc.plots.plot.VirtualEnvironment;
 
 public class PacketPlots extends JavaPlugin {
 
@@ -38,6 +41,15 @@ public class PacketPlots extends JavaPlugin {
 		PacketModifier.register();
 
 		this.getCommand("plot").setExecutor(new CommandPlot());
+	}
+
+	@Override
+	public void onDisable() {
+
+		for (VirtualEnvironment env : VirtualEnvironment.getActive()) {
+			env.save();
+		}
+
 	}
 
 	@Override

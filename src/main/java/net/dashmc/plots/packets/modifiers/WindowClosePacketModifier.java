@@ -1,6 +1,5 @@
 package net.dashmc.plots.packets.modifiers;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import org.bukkit.craftbukkit.v1_8_R3.event.CraftEventFactory;
@@ -15,6 +14,7 @@ import net.minecraft.server.v1_8_R3.ContainerChest;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.PacketPlayInCloseWindow;
+import net.minecraft.server.v1_8_R3.PacketPlayOutBlockAction;
 import net.minecraft.server.v1_8_R3.PlayerInventory;
 import net.minecraft.server.v1_8_R3.TileEntity;
 import net.minecraft.server.v1_8_R3.TileEntityChest;
@@ -50,6 +50,9 @@ public class WindowClosePacketModifier extends PacketModifier<PacketPlayInCloseW
 			playerInventory.setCarried(null);
 		}
 		tileEntityChest.l--;
+
+		PacketPlayOutBlockAction chestOpenPacket = new PacketPlayOutBlockAction(pos, block, 1, 0);
+		player.playerConnection.sendPacket(chestOpenPacket);
 
 		player.activeContainer = player.defaultContainer;
 		return true;

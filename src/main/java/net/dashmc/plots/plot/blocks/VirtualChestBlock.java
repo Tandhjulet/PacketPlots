@@ -9,12 +9,14 @@ import net.minecraft.server.v1_8_R3.BlockChest;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EntityLiving;
+import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.EnumDirection;
 import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.ITileInventory;
 import net.minecraft.server.v1_8_R3.InventoryLargeChest;
 import net.minecraft.server.v1_8_R3.ItemStack;
 import net.minecraft.server.v1_8_R3.MathHelper;
+import net.minecraft.server.v1_8_R3.PacketPlayOutBlockAction;
 import net.minecraft.server.v1_8_R3.StatisticList;
 import net.minecraft.server.v1_8_R3.TileEntity;
 import net.minecraft.server.v1_8_R3.TileEntityChest;
@@ -29,6 +31,9 @@ public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 		ITileInventory itileinventory = getInventory(environment, blockposition, block);
 
 		if (itileinventory != null) {
+			PacketPlayOutBlockAction chestOpenPacket = new PacketPlayOutBlockAction(blockposition, block, 1, 1);
+			((EntityPlayer) entityhuman).playerConnection.sendPacket(chestOpenPacket);
+
 			entityhuman.openContainer(itileinventory);
 			if (block.b == 0) {
 				entityhuman.b(StatisticList.aa);

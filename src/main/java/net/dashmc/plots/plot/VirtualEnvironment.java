@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -87,6 +88,10 @@ public class VirtualEnvironment implements IDataHolder {
 
 	public static <T extends Packet<?>> void register(PacketModifier<T> modifier) {
 		packetModifiers.put(modifier.getClazz(), modifier);
+	}
+
+	public static Collection<VirtualEnvironment> getActive() {
+		return virtualEnvironments.values();
 	}
 
 	public static VirtualEnvironment get(Player player) {
