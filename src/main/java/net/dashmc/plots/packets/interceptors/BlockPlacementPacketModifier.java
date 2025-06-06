@@ -1,12 +1,13 @@
-package net.dashmc.plots.packets.modifiers;
+package net.dashmc.plots.packets.interceptors;
 
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.util.NumberConversions;
 
-import net.dashmc.plots.packets.PacketModifier;
+import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.packets.extensions.VirtualBlockChangePacket;
 import net.dashmc.plots.plot.VirtualChunk;
+import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Debug;
 import net.dashmc.plots.utils.Utils;
@@ -20,21 +21,20 @@ import net.minecraft.server.v1_8_R3.Slot;
 
 // https://minecraft.wiki/w/Protocol?oldid=2772100#Player_Digging
 // https://github.com/Attano/Spigot-1.8/blob/9db48bc15e203179554b8d992ca6b0a528c8d300/net/minecraft/server/v1_8_R3/PlayerConnection.java#L638
-public class BlockPlacementPacketModifier extends PacketModifier<PacketPlayInBlockPlace> {
+public class BlockPlacementPacketModifier extends PacketInterceptor<PacketPlayInBlockPlace> {
 
 	@Override
-	public boolean modify(PacketPlayInBlockPlace packet, VirtualEnvironment environment) {
-		BlockPosition pos = packet.a();
-		// if (packet.getItemStack() != null && packet.getItemStack().getItem()
-		// instanceof ItemBlock)
-		// pos = offset(pos, packet.getFace());
+	public boolean intercept(PacketPlayInBlockPlace packet, VirtualConnection conn) {
+		EntityPlayer player = conn.getPlayer();
+		VirtualEnvironment env = conn.getEnvironment();
 
-		VirtualChunk virtualChunk = environment.getVirtualChunks()
+		BlockPosition pos = packet.a();
+
+		VirtualChunk virtualChunk = env.getVirtualChunks()
 				.get(Utils.getCoordHash(pos.getX() >> 4, pos.getZ() >> 4));
 		if (virtualChunk == null)
 			return false;
 
-		EntityPlayer player = environment.getNMSOwner();
 		if (player.dead)
 			return true;
 
@@ -66,7 +66,7 @@ public class BlockPlacementPacketModifier extends PacketModifier<PacketPlayInBlo
 					+ player.e((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D));
 
 			if (player.e((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D) < 64D) {
-				always = environment.getInteractManager().interact(player, environment, inHand, pos, dir, packet.d(),
+				always = env.getInteractManager().interact(player, env, inHand, pos, dir, packet.d(),
 						packet.e(), packet.f());
 			}
 
@@ -74,8 +74,8 @@ public class BlockPlacementPacketModifier extends PacketModifier<PacketPlayInBlo
 		}
 
 		if (flag) {
-			player.playerConnection.sendPacket(new VirtualBlockChangePacket(environment, pos).getPacket());
-			player.playerConnection.sendPacket(new VirtualBlockChangePacket(environment, pos.shift(dir)).getPacket());
+			player.playerConnection.sendPacket(new VirtualBlockChangePacket(env, pos).getPacket());
+			player.playerConnection.sendPacket(new VirtualBlockChangePacket(env, pos.shift(dir)).getPacket());
 		}
 
 		inHand = player.inventory.getItemInHand();
@@ -108,6 +108,6 @@ public class BlockPlacementPacketModifier extends PacketModifier<PacketPlayInBlo
 	}
 
 	public static void register() {
-		VirtualEnvironment.register(new BlockPlacementPacketModifier());
+		VirtualConnection.registerInterceptor(new BlockPlacementPacketModifier());
 	}
 }

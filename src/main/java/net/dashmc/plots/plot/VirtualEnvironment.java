@@ -23,20 +23,16 @@ import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
-
 import com.google.common.collect.Lists;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
 import lombok.Getter;
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.config.PlotConfig.ChunkConfig;
 import net.dashmc.plots.data.IDataHolder;
+import net.dashmc.plots.events.VirtualBlockBreakEvent;
 import net.dashmc.plots.events.VirtualBlockCanBuildEvent;
+import net.dashmc.plots.events.VirtualBlockDamageEvent;
 import net.dashmc.plots.events.VirtualInteractEvent;
-import net.dashmc.plots.packets.PacketModifier;
 import net.dashmc.plots.packets.extensions.VirtualBlockChangePacket;
 import net.dashmc.plots.utils.Debug;
 import net.dashmc.plots.utils.Utils;
@@ -47,6 +43,7 @@ import net.minecraft.server.v1_8_R3.BlockDoor;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Blocks;
 import net.minecraft.server.v1_8_R3.Chunk.EnumTileEntityState;
+import net.minecraft.server.v1_8_R3.WorldSettings.EnumGamemode;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.Entity;
 import net.minecraft.server.v1_8_R3.EntityHuman;
@@ -56,10 +53,11 @@ import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.IInventory;
 import net.minecraft.server.v1_8_R3.ITileInventory;
 import net.minecraft.server.v1_8_R3.ItemStack;
+import net.minecraft.server.v1_8_R3.ItemSword;
 import net.minecraft.server.v1_8_R3.Material;
+import net.minecraft.server.v1_8_R3.MinecraftServer;
 import net.minecraft.server.v1_8_R3.Packet;
-import net.minecraft.server.v1_8_R3.PacketListenerPlayIn;
-import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
+import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_8_R3.TileEntity;
 
@@ -74,21 +72,17 @@ import net.minecraft.server.v1_8_R3.TileEntity;
 
 public class VirtualEnvironment implements IDataHolder {
 	private static final HashMap<Player, VirtualEnvironment> virtualEnvironments = new HashMap<>();
-	private static final HashMap<Class<?>, PacketModifier<?>> packetModifiers = new HashMap<>();
-
-	private static final String NETTY_PIPELINE_NAME = "VirtualEnvironment";
 	private static final File DATA_DIRECTORY = new File(PacketPlots.getInstance().getDataFolder(), "data");
 
+	private @Getter HashMap<EntityPlayer, VirtualConnection> connections = new HashMap<>();
+
+	// private @Getter HashMap<Integer, Entity> entities = new HashMap<>();
 	private @Getter HashMap<Integer, VirtualChunk> virtualChunks = new HashMap<>();
 	private @Getter final List<TileEntity> tileEntities = Lists.newArrayList();
 	private @Getter World world;
 	private @Getter net.minecraft.server.v1_8_R3.World nmsWorld;
 	private @Getter UUID ownerUuid;
 	private @Getter InteractManager interactManager = new InteractManager();
-
-	public static <T extends Packet<?>> void register(PacketModifier<T> modifier) {
-		packetModifiers.put(modifier.getClazz(), modifier);
-	}
 
 	public static Collection<VirtualEnvironment> getActive() {
 		return virtualEnvironments.values();
@@ -103,6 +97,7 @@ public class VirtualEnvironment implements IDataHolder {
 			throw new IOException(
 					"Tried initialization of VirtualEnvironment for offline player: " + player.getUniqueId());
 
+		EntityPlayer nmsOwner = ((CraftPlayer) player).getHandle();
 		virtualEnvironments.put(player, this);
 		File dataFile = new File(DATA_DIRECTORY, player.getUniqueId() + ".dat");
 
@@ -117,7 +112,7 @@ public class VirtualEnvironment implements IDataHolder {
 				throw new IOException(
 						"Mismatched UUIDs: (" + prevUuid + " => " + ownerUuid + "). File might be corrupt");
 
-			togglePacketHandler(false);
+			startVirtualization(nmsOwner);
 			return;
 		}
 
@@ -134,7 +129,7 @@ public class VirtualEnvironment implements IDataHolder {
 		}
 
 		save();
-		togglePacketHandler(false);
+		startVirtualization(nmsOwner);
 	}
 
 	/**
@@ -207,42 +202,33 @@ public class VirtualEnvironment implements IDataHolder {
 		deserialize(stream);
 
 		Player owner = getOwner();
+		EntityPlayer nmsOwner = ((CraftPlayer) owner).getHandle();
 		if (owner == null || !owner.isOnline())
 			throw new IOException("Tried initialization of VirtualEnvironment for offline player: " + ownerUuid);
 		virtualEnvironments.put(owner, this);
 
-		togglePacketHandler(false);
+		startVirtualization(nmsOwner);
 	}
 
-	public void stopVirtualization() {
-		togglePacketHandler(true);
+	public VirtualConnection getConnection(EntityPlayer player) {
+		return connections.get(player);
+	}
+
+	public void stopVirtualization(EntityPlayer player) {
+		getConnection(player).close();
 		getVirtualChunks().values().forEach((val) -> {
 			Packet<?> packet = new PacketPlayOutMapChunk(val.getChunk(), false, 65535);
-			getNMSOwner().playerConnection.sendPacket(packet);
+			player.playerConnection.sendPacket(packet);
 		});
 	}
 
-	public void startVirtualization() {
-		togglePacketHandler(false);
+	public void startVirtualization(EntityPlayer player) {
+		connections.put(player, VirtualConnection.establish(player, this));
 		getVirtualChunks().values().forEach((val) -> {
-			getNMSOwner().playerConnection
+			player.playerConnection
 					.sendPacket(val.getPacket(65535, !((CraftWorld) world).getHandle().worldProvider.o(), false));
 
 		});
-	}
-
-	private void togglePacketHandler(boolean remove) {
-		Player owner = getOwner();
-		if (owner == null)
-			return;
-
-		EntityPlayer entityPlayer = ((CraftPlayer) owner).getHandle();
-		Channel channel = entityPlayer.playerConnection.networkManager.channel;
-		if (channel.pipeline().get(NETTY_PIPELINE_NAME) == null && !remove) {
-			channel.pipeline().addBefore("packet_handler", NETTY_PIPELINE_NAME, new PacketHandler());
-		} else if (channel.pipeline().get(NETTY_PIPELINE_NAME) != null && remove) {
-			channel.pipeline().remove(NETTY_PIPELINE_NAME);
-		}
 	}
 
 	public IBlockData getType(BlockPosition pos) {
@@ -294,21 +280,58 @@ public class VirtualEnvironment implements IDataHolder {
 		return chunk.isSectionSet((byte) (blockposition.getY() >> 4));
 	}
 
+	// public boolean addEntity(Entity entity) {
+	// if (entity == null)
+	// return false;
+	// int x = MathHelper.floor(entity.locX / 16D);
+	// int z = MathHelper.floor(entity.locZ / 16D);
+
+	// Cancellable event = null;
+	// if ((entity instanceof EntityLiving || entity.getBukkitEntity() instanceof
+	// Projectile
+	// || entity instanceof EntityExperienceOrb) && !(entity instanceof
+	// EntityPlayer)) {
+	// entity.dead = true;
+	// return false;
+	// } else if (entity instanceof EntityItem) {
+	// Item ent = (Item) entity.getBukkitEntity();
+
+	// VirtualItemSpawnEvent ev = new VirtualItemSpawnEvent(ent.getLocation(), ent,
+	// this);
+	// Bukkit.getPluginManager().callEvent(ev);
+	// event = ev;
+	// }
+
+	// if (event != null && (event.isCancelled() || entity.dead)) {
+	// entity.dead = true;
+	// return false;
+	// }
+
+	// entities.put(entity.getId(), entity);
+	// return true;
+	// }
+
+	// public void addEntity(BlockPosition blockposition, ItemStack itemstack) {
+	// float f = 0.5F;
+	// double d0 = (double)(nmsWorld.random.nextFloat() * f) + (double)(1.0F - f) *
+	// 0.5;
+	// double d1 = (double)(nmsWorld.random.nextFloat() * f) + (double)(1.0F - f) *
+	// 0.5;
+	// double d2 = (double)(nmsWorld.random.nextFloat() * f) + (double)(1.0F - f) *
+	// 0.5;
+	// EntityItem entityitem = new EntityItem(nmsWorld, (double)blockposition.getX()
+	// + d0, (double)blockposition.getY() + d1, (double)blockposition.getZ() + d2,
+	// itemstack);
+	// entityitem.p();
+	// world.addEntity(entityitem);
+	// }
+
 	public Player getOwner() {
 		return Bukkit.getPlayer(ownerUuid);
 	}
 
 	public EntityPlayer getNMSOwner() {
 		return ((CraftPlayer) getOwner()).getHandle();
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T extends Packet<?>> boolean intercept(T packet) {
-		PacketModifier<T> modifier = (PacketModifier<T>) packetModifiers.get(packet.getClass());
-		if (modifier != null) {
-			return modifier.modify(packet, this);
-		}
-		return false;
 	}
 
 	@Override
@@ -364,57 +387,6 @@ public class VirtualEnvironment implements IDataHolder {
 			virtualChunk.serialize(stream);
 		}
 
-	}
-
-	/**
-	 * PacketHandler for this virtual environment. Sorts through the packets and
-	 * passes the important ones to VirtualEnvironment#intercept.
-	 */
-	private class PacketHandler extends ChannelDuplexHandler {
-		// Outgoing
-		@SuppressWarnings("unchecked")
-		@Override
-		public void write(ChannelHandlerContext chx, Object obj, ChannelPromise promise) throws Exception {
-			// Packets to cancel/modify if they occur in the environment
-
-			// Block updates:
-			// Block change (https://minecraft.wiki/w/Protocol?oldid=2772100#Block_Change)
-			// Multi block change
-			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Multi_Block_Change)
-			// Block action (https://minecraft.wiki/w/Protocol?oldid=2772100#Block_Action)
-
-			Packet<PacketListenerPlayOut> packet = (Packet<PacketListenerPlayOut>) obj;
-			if (intercept(packet))
-				return;
-
-			super.write(chx, packet, promise);
-		}
-
-		// Incomming
-		@SuppressWarnings("unchecked")
-		@Override
-		public void channelRead(ChannelHandlerContext chx, Object obj) throws Exception {
-			// Packets to pass to the env. if they occur there
-
-			// Interactions
-			// Player Digging
-			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Player_Digging)
-			// Player Block Placement
-			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Player_Block_Placement)
-			// Update Sign (https://minecraft.wiki/w/Protocol?oldid=2772100#Update_Sign)
-			Packet<PacketListenerPlayIn> packet = (Packet<PacketListenerPlayIn>) obj;
-			if (intercept(packet))
-				return;
-
-			super.channelRead(chx, packet);
-		}
-
-		@Override
-		public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-			System.err.println("Netty pipeline exception: " + cause);
-			cause.printStackTrace();
-			super.exceptionCaught(ctx, cause);
-		}
 	}
 
 	public class InteractManager {
@@ -480,6 +452,216 @@ public class VirtualEnvironment implements IDataHolder {
 			}
 
 			return result;
+		}
+
+		// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L105
+		public void startDestroy(EntityPlayer player, BlockPosition pos, EnumDirection dir) {
+			VirtualInteractEvent event = new VirtualInteractEvent(player, Action.LEFT_CLICK_BLOCK, pos, dir,
+					player.inventory.getItemInHand(), false,
+					VirtualEnvironment.this);
+			Bukkit.getPluginManager().callEvent(event);
+
+			if (event.isCancelled()) {
+				player.playerConnection
+						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+				TileEntity tile = getTileEntity(pos);
+				if (tile != null)
+					player.playerConnection.sendPacket(tile.getUpdatePacket());
+				return;
+			}
+
+			if (player.playerInteractManager.isCreative()) {
+				breakBlock(player, pos);
+				return;
+			}
+
+			Block block = getType(pos).getBlock();
+			if (player.playerInteractManager.c()) {
+				if (player.playerInteractManager.getGameMode() == EnumGamemode.SPECTATOR)
+					return;
+
+				if (player.cn()) {
+					ItemStack item = player.bZ();
+					if (item == null)
+						return;
+					if (item.c(block))
+						return;
+				}
+			}
+
+			Utils.setLastDigTick(player.playerInteractManager, Utils.getCurrentTick(player.playerInteractManager));
+			float f = 1f;
+
+			if (event.getUseClickedBlock() == Event.Result.DENY) {
+
+				IBlockData data = getType(pos);
+				if (block == Blocks.WOODEN_DOOR) {
+					boolean bottom = data.get(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.LOWER;
+					player.playerConnection
+							.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+					player.playerConnection.sendPacket(
+							new VirtualBlockChangePacket(VirtualEnvironment.this, bottom ? pos.up() : pos.down())
+									.getPacket());
+				} else if (block == Blocks.TRAPDOOR) {
+					player.playerConnection
+							.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+				}
+			} else if (block.getMaterial() != Material.AIR) {
+				// block.attack(nmsWorld, pos, player);
+				f = block.getDamage(player, nmsWorld, pos);
+			}
+
+			if (event.getUseItemInHand() == Event.Result.DENY) {
+				if (f > 1.0f)
+					player.playerConnection
+							.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+
+				return;
+			}
+
+			VirtualBlockDamageEvent blockEvent = new VirtualBlockDamageEvent(Utils.convertPosToLoc(world, pos),
+					player.getBukkitEntity(), player.getBukkitEntity().getItemInHand(), f >= 1.0f,
+					VirtualEnvironment.this);
+			if (blockEvent.isCancelled()) {
+				player.playerConnection
+						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+				return;
+			}
+
+			if (blockEvent.isInstaBreak())
+				f = 2.0f;
+
+			if (block.getMaterial() != Material.AIR && f >= 1.0f) {
+				breakBlock(player, pos);
+			} else { // https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L190
+				Utils.setIsDestroying(player.playerInteractManager, true);
+				Utils.setDestroyPosition(player.playerInteractManager, pos);
+				Utils.setForce(player.playerInteractManager, (int) (f * 10f));
+			}
+
+			return;
+		}
+
+		// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L203
+		public void stopDestroy(EntityPlayer player, BlockPosition pos) {
+			if (pos.equals(Utils.getDestroyPosition(player.playerInteractManager))) {
+				Utils.setCurrentTick(player.playerInteractManager, MinecraftServer.currentTick);
+				int diggingFor = Utils.getCurrentTick(player.playerInteractManager)
+						- Utils.getLastDigTick(player.playerInteractManager);
+				Block block = getType(pos).getBlock();
+				if (block.getMaterial() != Material.AIR) {
+					float f = block.getDamage(player, nmsWorld, pos) * (float) (diggingFor + 1);
+					if (f >= 0.7F) {
+						Utils.setIsDestroying(player.playerInteractManager, false);
+						breakBlock(player, pos);
+					} else if (!Utils.getHasDestroyed(player.playerInteractManager)) {
+						Utils.setIsDestroying(player.playerInteractManager, false);
+
+						Utils.setHasDestroyed(player.playerInteractManager, true);
+						Utils.setHasDestroyedPosition(player.playerInteractManager, pos);
+						Utils.setHasDestoyedDigTick(player.playerInteractManager,
+								Utils.getLastDigTick(player.playerInteractManager));
+					}
+				}
+			} else {
+				player.playerConnection
+						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+			}
+		}
+
+		// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L231
+		public void abortDestory(EntityPlayer player) {
+			Utils.setIsDestroying(player.playerInteractManager, false);
+			return;
+		}
+
+		// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L249
+		public boolean breakBlock(EntityPlayer player, BlockPosition pos) {
+			VirtualBlockBreakEvent ev = null;
+
+			boolean isSword = player.playerInteractManager.getGameMode().d() && player.bA() != null
+					&& player.bA().getItem() instanceof ItemSword;
+			if (getTileEntity(pos) == null && !isSword) {
+				PacketPlayOutBlockChange packet = new VirtualBlockChangePacket(VirtualEnvironment.this, pos)
+						.getPacket();
+				packet.block = Blocks.AIR.getBlockData();
+				player.playerConnection.sendPacket(packet);
+			}
+
+			ev = new VirtualBlockBreakEvent(Utils.convertPosToLoc(world, pos), VirtualEnvironment.this);
+			ev.setCancelled(isSword);
+
+			IBlockData nmsData = getType(pos);
+			Block nmsBlock = nmsData.getBlock();
+
+			// if(nmsBlock != null && !ev.isCancelled() &&
+			// !player.playerInteractManager.isCreative() && player.b(nmsBlock)) {
+			// if(!(nmsBlock.d() && !nmsBlock.isTileEntity() &&
+			// EnchantmentManager.hasSilkTouchEnchantment(player))) {
+
+			// }
+			// }
+
+			Bukkit.getPluginManager().callEvent(ev);
+			TileEntity tile = getTileEntity(pos);
+
+			if (ev.isCancelled()) {
+				if (isSword)
+					return false;
+
+				player.playerConnection
+						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+
+				if (tile != null)
+					player.playerConnection.sendPacket(tile.getUpdatePacket());
+
+				return false;
+			}
+
+			if (nmsBlock == Blocks.AIR)
+				return false;
+
+			if (nmsBlock == Blocks.SKULL && !player.playerInteractManager.isCreative()) {
+				boolean flag = setBlock(pos, Blocks.AIR.getBlockData(), 3);
+				// postBreak excluded:
+				// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L243
+
+				return flag;
+			}
+
+			if (player.playerInteractManager.c()) {
+				if (player.playerInteractManager.getGameMode() == EnumGamemode.SPECTATOR)
+					return false;
+				if (!player.cn()) {
+					ItemStack item = player.bZ();
+					if (item == null)
+						return false;
+					if (!item.c(nmsBlock))
+						return false;
+				}
+			}
+
+			boolean couldSet = setBlock(pos, Blocks.AIR.getBlockData(), 3);
+			if (player.playerInteractManager.isCreative())
+				player.playerConnection
+						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+			else {
+				ItemStack held = player.bZ();
+				boolean flag = player.b(nmsBlock);
+
+				if (held != null) {
+					held.a(null, nmsBlock, pos, player);
+					if (held.count == 0)
+						player.ca();
+				}
+
+				if (flag && couldSet) {
+					// here the item would drop normally - we won't do that :-)
+					// nmsBlock.a(nmsWorld, player, pos, nmsData, tile);
+				}
+			}
+
+			return couldSet;
 		}
 	}
 

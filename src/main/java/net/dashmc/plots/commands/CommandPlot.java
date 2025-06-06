@@ -3,9 +3,11 @@ package net.dashmc.plots.commands;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import net.dashmc.plots.plot.VirtualEnvironment;
+import net.minecraft.server.v1_8_R3.EntityPlayer;
 
 public class CommandPlot implements CommandExecutor {
 
@@ -27,11 +29,12 @@ public class CommandPlot implements CommandExecutor {
 			return true;
 		}
 
+		EntityPlayer nmsPlayer = ((CraftPlayer) player).getHandle();
 		if (args[1].equals("on")) {
-			VirtualEnvironment.get(player).startVirtualization();
+			VirtualEnvironment.get(player).startVirtualization(nmsPlayer);
 			player.sendMessage("Toggled plot virtualization on!");
 		} else if (args[1].equals("off")) {
-			VirtualEnvironment.get(player).stopVirtualization();
+			VirtualEnvironment.get(player).stopVirtualization(nmsPlayer);
 			player.sendMessage("Toggled plot virtualization off!");
 		} else {
 			player.sendMessage("Use either on/off to toggle");

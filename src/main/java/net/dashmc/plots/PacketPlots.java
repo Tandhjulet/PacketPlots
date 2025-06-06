@@ -15,7 +15,7 @@ import net.dashmc.plots.commands.CommandPlot;
 import net.dashmc.plots.config.PlotConfig;
 import net.dashmc.plots.config.serializers.ChunkCoordPairSerializer;
 import net.dashmc.plots.listeners.ConnectionListener;
-import net.dashmc.plots.packets.PacketModifier;
+import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.VirtualEnvironment;
 
 public class PacketPlots extends JavaPlugin {
@@ -38,7 +38,7 @@ public class PacketPlots extends JavaPlugin {
 		});
 
 		ConnectionListener.register();
-		PacketModifier.register();
+		PacketInterceptor.register();
 
 		this.getCommand("plot").setExecutor(new CommandPlot());
 	}

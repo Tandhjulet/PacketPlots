@@ -3,6 +3,7 @@ package net.dashmc.plots.listeners;
 import java.io.IOException;
 
 import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -31,7 +32,7 @@ public class ConnectionListener implements Listener {
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
 		VirtualEnvironment environment = VirtualEnvironment.get(player);
-		environment.stopVirtualization();
+		environment.stopVirtualization(((CraftPlayer) player).getHandle());
 		environment.save();
 
 	}

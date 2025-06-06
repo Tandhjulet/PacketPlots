@@ -48,6 +48,9 @@ public abstract class VirtualBlock<T extends Block> {
 			EntityLiving entityliving, ItemStack itemstack) {
 	}
 
+	public void postBreak(T block, VirtualEnvironment environment, BlockPosition blockposition, IBlockData iblockdata) {
+	}
+
 	public abstract Class<T> getClazz();
 
 	public void register() {

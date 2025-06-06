@@ -7,3 +7,4 @@ TODO:
 -   visits
     -   flere spillere tilknyttet èt packet plot
 -   fremvisning
+-   BlockDigPacketModifier

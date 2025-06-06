@@ -1,4 +1,4 @@
-package net.dashmc.plots.packets.modifiers;
+package net.dashmc.plots.packets.interceptors;
 
 import java.lang.reflect.Field;
 import java.util.HashSet;
@@ -6,22 +6,25 @@ import java.util.LinkedList;
 
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.config.PlotConfig.ChunkConfig;
-import net.dashmc.plots.packets.PacketModifier;
+import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.VirtualChunk;
+import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunkBulk;
 
 // https://minecraft.wiki/w/Protocol?oldid=2772100#Map_Chunk_Bulk
-public class MapChunkBulkPacketModifier extends PacketModifier<PacketPlayOutMapChunkBulk> {
+public class MapChunkBulkPacketModifier extends PacketInterceptor<PacketPlayOutMapChunkBulk> {
 	protected static final HashSet<Integer> coordPairs = new HashSet<>();
 	private static Field xCoordField;
 	private static Field zCoordField;
 	private static Field chunkMapField;
 
 	@Override
-	public boolean modify(PacketPlayOutMapChunkBulk packet, VirtualEnvironment environment) {
+	public boolean intercept(PacketPlayOutMapChunkBulk packet, VirtualConnection conn) {
+		VirtualEnvironment env = conn.getEnvironment();
+
 		try {
 			LinkedList<Integer> indices = new LinkedList<>();
 
@@ -39,7 +42,7 @@ public class MapChunkBulkPacketModifier extends PacketModifier<PacketPlayOutMapC
 			for (int i : indices) {
 				int hash = Utils.getCoordHash(xCoords[i], zCoords[i]);
 
-				VirtualChunk chunk = environment.getVirtualChunks().get(hash);
+				VirtualChunk chunk = env.getVirtualChunks().get(hash);
 				try {
 					ChunkMap chunkMap = chunk.getChunkMap(65535, true, true);
 					chunkMaps[i] = chunkMap;
@@ -61,7 +64,7 @@ public class MapChunkBulkPacketModifier extends PacketModifier<PacketPlayOutMapC
 	}
 
 	public static void register() {
-		VirtualEnvironment.register(new MapChunkBulkPacketModifier());
+		VirtualConnection.registerInterceptor(new MapChunkBulkPacketModifier());
 	}
 
 	static {

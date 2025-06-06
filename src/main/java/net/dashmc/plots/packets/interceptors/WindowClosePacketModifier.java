@@ -1,10 +1,11 @@
-package net.dashmc.plots.packets.modifiers;
+package net.dashmc.plots.packets.interceptors;
 
 import java.lang.reflect.Method;
 
 import org.bukkit.craftbukkit.v1_8_R3.event.CraftEventFactory;
 
-import net.dashmc.plots.packets.PacketModifier;
+import net.dashmc.plots.packets.PacketInterceptor;
+import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockChest;
@@ -19,12 +20,13 @@ import net.minecraft.server.v1_8_R3.PlayerInventory;
 import net.minecraft.server.v1_8_R3.TileEntity;
 import net.minecraft.server.v1_8_R3.TileEntityChest;
 
-public class WindowClosePacketModifier extends PacketModifier<PacketPlayInCloseWindow> {
+public class WindowClosePacketModifier extends PacketInterceptor<PacketPlayInCloseWindow> {
 	private static Method closeContainerMethod;
 
 	@Override
-	public boolean modify(PacketPlayInCloseWindow packet, VirtualEnvironment environment) {
-		EntityPlayer player = environment.getNMSOwner();
+	public boolean intercept(PacketPlayInCloseWindow packet, VirtualConnection connection) {
+		VirtualEnvironment environment = connection.getEnvironment();
+		EntityPlayer player = connection.getPlayer();
 		CraftEventFactory.handleInventoryCloseEvent(player);
 
 		if (!(player.activeContainer instanceof ContainerChest))
@@ -64,7 +66,7 @@ public class WindowClosePacketModifier extends PacketModifier<PacketPlayInCloseW
 	}
 
 	public static void register() {
-		VirtualEnvironment.register(new WindowClosePacketModifier());
+		VirtualConnection.registerInterceptor(new WindowClosePacketModifier());
 	}
 
 	static {
