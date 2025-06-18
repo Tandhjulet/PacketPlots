@@ -507,6 +507,8 @@ public class VirtualEnvironment implements IDataHolder {
 			Utils.setLastDigTick(player.playerInteractManager, Utils.getCurrentTick(player.playerInteractManager));
 			float f = 1f;
 
+			Debug.log("Setting last dig tick");
+
 			if (event.getUseClickedBlock() == Event.Result.DENY) {
 
 				IBlockData data = getType(pos);
@@ -538,6 +540,8 @@ public class VirtualEnvironment implements IDataHolder {
 					player.getBukkitEntity(), player.getBukkitEntity().getItemInHand(), f >= 1.0f,
 					VirtualEnvironment.this);
 			if (blockEvent.isCancelled()) {
+				Debug.log("Event has gotten cancelled");
+
 				player.playerConnection
 						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
 				return;
@@ -547,8 +551,12 @@ public class VirtualEnvironment implements IDataHolder {
 				f = 2.0f;
 
 			if (block.getMaterial() != Material.AIR && f >= 1.0f) {
+				Debug.log("Insta-breaking block");
+
 				breakBlock(player, pos);
 			} else { // https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L190
+				Debug.log("Setting destroy-fields, pos " + pos);
+
 				Utils.setIsDestroying(player.playerInteractManager, true);
 				Utils.setDestroyPosition(player.playerInteractManager, pos);
 				Utils.setForce(player.playerInteractManager, (int) (f * 10f));
@@ -559,6 +567,8 @@ public class VirtualEnvironment implements IDataHolder {
 
 		// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L203
 		public void stopDestroy(EntityPlayer player, BlockPosition pos) {
+			Debug.log("stop destroy at pos: " + pos.toString() + ", destroy pos: "
+					+ Utils.getDestroyPosition(player.playerInteractManager));
 			if (pos.equals(Utils.getDestroyPosition(player.playerInteractManager))) {
 				Utils.setCurrentTick(player.playerInteractManager, MinecraftServer.currentTick);
 				int diggingFor = Utils.getCurrentTick(player.playerInteractManager)
@@ -566,6 +576,8 @@ public class VirtualEnvironment implements IDataHolder {
 				Block block = getType(pos).getBlock();
 				if (block.getMaterial() != Material.AIR) {
 					float f = block.getDamage(player, nmsWorld, pos) * (float) (diggingFor + 1);
+					Debug.log("Trying to break block, force: " + f + " >= 0.7");
+
 					if (f >= 0.7F) {
 						Utils.setIsDestroying(player.playerInteractManager, false);
 						breakBlock(player, pos);
@@ -581,6 +593,7 @@ public class VirtualEnvironment implements IDataHolder {
 
 		// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L231
 		public void abortDestory(EntityPlayer player) {
+			Debug.log("abort destroy");
 			Utils.setIsDestroying(player.playerInteractManager, false);
 			return;
 		}

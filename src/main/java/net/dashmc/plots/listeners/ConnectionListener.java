@@ -11,6 +11,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import net.dashmc.plots.PacketPlots;
+import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
 
 public class ConnectionListener implements Listener {
@@ -32,7 +33,7 @@ public class ConnectionListener implements Listener {
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
 		VirtualEnvironment environment = VirtualEnvironment.get(player);
-		environment.getConnection(((CraftPlayer) player).getHandle()).close();
+		VirtualConnection.get(((CraftPlayer) player).getHandle()).close();
 		// environment.stopVirtualization(((CraftPlayer) player).getHandle());
 		environment.close();
 	}
