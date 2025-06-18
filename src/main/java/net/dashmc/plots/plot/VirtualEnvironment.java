@@ -98,7 +98,6 @@ public class VirtualEnvironment implements IDataHolder {
 					"Tried initialization of VirtualEnvironment for offline player: " + player.getUniqueId());
 
 		EntityPlayer nmsOwner = ((CraftPlayer) player).getHandle();
-		virtualEnvironments.put(player, this);
 		File dataFile = new File(DATA_DIRECTORY, player.getUniqueId() + ".dat");
 
 		if (dataFile.exists()) {
@@ -112,9 +111,12 @@ public class VirtualEnvironment implements IDataHolder {
 				throw new IOException(
 						"Mismatched UUIDs: (" + prevUuid + " => " + ownerUuid + "). File might be corrupt");
 
+			virtualEnvironments.put(player, this);
 			startVirtualization(nmsOwner);
 			return;
 		}
+
+		virtualEnvironments.put(player, this);
 
 		this.ownerUuid = player.getUniqueId();
 		this.world = PacketPlots.getPlotConfig().getWorld();
@@ -184,6 +186,14 @@ public class VirtualEnvironment implements IDataHolder {
 		return itemStack.d(block) || itemStack.x();
 	}
 
+	public void close() {
+		save();
+
+		// TODO: handle active connections
+		virtualEnvironments.remove(getOwner());
+		virtualChunks.clear();
+	}
+
 	public void save() {
 		try {
 			File dataFile = new File(DATA_DIRECTORY, getOwnerUuid() + ".dat");
@@ -214,8 +224,17 @@ public class VirtualEnvironment implements IDataHolder {
 		return connections.get(player);
 	}
 
+	public void removeConnection(EntityPlayer player) {
+		connections.remove(player);
+	}
+
+	public void addConnection(EntityPlayer player, VirtualConnection conn) {
+		connections.put(player, conn);
+	}
+
 	public void stopVirtualization(EntityPlayer player) {
-		getConnection(player).close();
+		VirtualConnection.get(player).close();
+
 		getVirtualChunks().values().forEach((val) -> {
 			Packet<?> packet = new PacketPlayOutMapChunk(val.getChunk(), false, 65535);
 			player.playerConnection.sendPacket(packet);
@@ -223,7 +242,8 @@ public class VirtualEnvironment implements IDataHolder {
 	}
 
 	public void startVirtualization(EntityPlayer player) {
-		connections.put(player, VirtualConnection.establish(player, this));
+		VirtualConnection.establish(player, this);
+
 		getVirtualChunks().values().forEach((val) -> {
 			player.playerConnection
 					.sendPacket(val.getPacket(65535, !((CraftWorld) world).getHandle().worldProvider.o(), false));
@@ -363,6 +383,8 @@ public class VirtualEnvironment implements IDataHolder {
 			virtualChunks.put(chunk.coords.hashCode(),
 					new VirtualChunk(this, chunk.coords, nmsWorld, chunk.getSectionsAsMask()));
 		}
+
+		Debug.log("Loaded chunks from save file: " + virtualChunks.size());
 	}
 
 	public void setTileEntity(BlockPosition blockPosition, TileEntity tileEntity) {
@@ -461,6 +483,8 @@ public class VirtualEnvironment implements IDataHolder {
 					VirtualEnvironment.this);
 			Bukkit.getPluginManager().callEvent(event);
 
+			Debug.log("startDestroy called, is interact event cancelled? " + event.isCancelled());
+
 			if (event.isCancelled()) {
 				player.playerConnection
 						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
@@ -470,12 +494,17 @@ public class VirtualEnvironment implements IDataHolder {
 				return;
 			}
 
+			Debug.log("Is player creative?" + player.playerInteractManager.isCreative());
+
 			if (player.playerInteractManager.isCreative()) {
 				breakBlock(player, pos);
 				return;
 			}
 
 			Block block = getType(pos).getBlock();
+
+			Debug.log("Is survival or adventure mode?" + player.playerInteractManager.c());
+
 			if (player.playerInteractManager.c()) {
 				if (player.playerInteractManager.getGameMode() == EnumGamemode.SPECTATOR)
 					return;
@@ -554,13 +583,8 @@ public class VirtualEnvironment implements IDataHolder {
 					if (f >= 0.7F) {
 						Utils.setIsDestroying(player.playerInteractManager, false);
 						breakBlock(player, pos);
-					} else if (!Utils.getHasDestroyed(player.playerInteractManager)) {
-						Utils.setIsDestroying(player.playerInteractManager, false);
+					} else { // TODO:
 
-						Utils.setHasDestroyed(player.playerInteractManager, true);
-						Utils.setHasDestroyedPosition(player.playerInteractManager, pos);
-						Utils.setHasDestoyedDigTick(player.playerInteractManager,
-								Utils.getLastDigTick(player.playerInteractManager));
 					}
 				}
 			} else {
@@ -586,6 +610,8 @@ public class VirtualEnvironment implements IDataHolder {
 						.getPacket();
 				packet.block = Blocks.AIR.getBlockData();
 				player.playerConnection.sendPacket(packet);
+
+				Debug.log("is not tile && is not sword, player is creative. sending break packet.");
 			}
 
 			ev = new VirtualBlockBreakEvent(Utils.convertPosToLoc(world, pos), VirtualEnvironment.this);
@@ -605,6 +631,8 @@ public class VirtualEnvironment implements IDataHolder {
 			Bukkit.getPluginManager().callEvent(ev);
 			TileEntity tile = getTileEntity(pos);
 
+			Debug.log("Is block break event cancelled? " + ev.isCancelled());
+
 			if (ev.isCancelled()) {
 				if (isSword)
 					return false;
@@ -620,6 +648,8 @@ public class VirtualEnvironment implements IDataHolder {
 
 			if (nmsBlock == Blocks.AIR)
 				return false;
+
+			Debug.log("block is not air");
 
 			if (nmsBlock == Blocks.SKULL && !player.playerInteractManager.isCreative()) {
 				boolean flag = setBlock(pos, Blocks.AIR.getBlockData(), 3);
@@ -642,6 +672,8 @@ public class VirtualEnvironment implements IDataHolder {
 			}
 
 			boolean couldSet = setBlock(pos, Blocks.AIR.getBlockData(), 3);
+			Debug.log("tried setting block server-side at " + pos.toString() + " to air");
+
 			if (player.playerInteractManager.isCreative())
 				player.playerConnection
 						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());

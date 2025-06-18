@@ -33,14 +33,14 @@ public class MapChunkBulkPacketModifier extends PacketInterceptor<PacketPlayOutM
 			ChunkMap[] chunkMaps = (ChunkMap[]) chunkMapField.get(packet);
 
 			for (int i = 0; i < xCoords.length; i++) {
-				int hash = Utils.getCoordHash(xCoords[i], zCoords[i]);
+				int hash = Utils.getChunkCoordHash(xCoords[i], zCoords[i]);
 				if (coordPairs.contains(hash)) {
 					indices.add(i);
 				}
 			}
 
 			for (int i : indices) {
-				int hash = Utils.getCoordHash(xCoords[i], zCoords[i]);
+				int hash = Utils.getChunkCoordHash(xCoords[i], zCoords[i]);
 
 				VirtualChunk chunk = env.getVirtualChunks().get(hash);
 				try {

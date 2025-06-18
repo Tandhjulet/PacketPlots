@@ -24,6 +24,10 @@ public class VirtualConnection {
 	private static final String NETTY_PIPELINE_NAME = "VirtualEnvironment";
 	private static HashMap<EntityPlayer, VirtualConnection> connections = new HashMap<>();
 
+	public static VirtualConnection get(EntityPlayer player) {
+		return connections.get(player);
+	}
+
 	private VirtualConnection(EntityPlayer player, VirtualEnvironment environment) {
 		this.player = player;
 		this.environment = environment;
@@ -44,6 +48,7 @@ public class VirtualConnection {
 			channel.pipeline().addBefore("packet_handler", NETTY_PIPELINE_NAME, new PacketHandler());
 		}
 
+		environment.addConnection(player, this);
 		connections.put(player, this);
 	}
 
@@ -53,6 +58,7 @@ public class VirtualConnection {
 			channel.pipeline().remove(NETTY_PIPELINE_NAME);
 		}
 
+		environment.removeConnection(player);
 		connections.remove(player);
 	}
 

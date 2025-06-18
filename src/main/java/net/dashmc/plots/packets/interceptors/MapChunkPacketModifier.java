@@ -23,7 +23,7 @@ public class MapChunkPacketModifier extends PacketInterceptor<PacketPlayOutMapCh
 			int xCoord = xCoordField.getInt(packet);
 			int zCoord = zCoordField.getInt(packet);
 
-			int hash = Utils.getCoordHash(xCoord, zCoord);
+			int hash = Utils.getChunkCoordHash(xCoord, zCoord);
 			if (MapChunkBulkPacketModifier.coordPairs.contains(hash)) {
 				VirtualChunk chunk = environment.getVirtualChunks().get(hash);
 				chunkMapField.set(packet, chunk.getChunkMap(65535, true, true));

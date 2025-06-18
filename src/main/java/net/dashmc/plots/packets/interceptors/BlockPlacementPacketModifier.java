@@ -31,7 +31,7 @@ public class BlockPlacementPacketModifier extends PacketInterceptor<PacketPlayIn
 		BlockPosition pos = packet.a();
 
 		VirtualChunk virtualChunk = env.getVirtualChunks()
-				.get(Utils.getCoordHash(pos.getX() >> 4, pos.getZ() >> 4));
+				.get(Utils.getChunkCoordHash(pos.getX() >> 4, pos.getZ() >> 4));
 		if (virtualChunk == null)
 			return false;
 

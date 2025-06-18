@@ -32,9 +32,9 @@ public class ConnectionListener implements Listener {
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
 		VirtualEnvironment environment = VirtualEnvironment.get(player);
-		environment.stopVirtualization(((CraftPlayer) player).getHandle());
-		environment.save();
-
+		environment.getConnection(((CraftPlayer) player).getHandle()).close();
+		// environment.stopVirtualization(((CraftPlayer) player).getHandle());
+		environment.close();
 	}
 
 	public static void register() {

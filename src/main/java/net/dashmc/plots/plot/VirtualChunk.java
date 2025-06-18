@@ -17,6 +17,7 @@ import com.google.common.collect.Lists;
 
 import lombok.Getter;
 import net.dashmc.plots.data.IDataHolder;
+import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockContainer;
 import net.minecraft.server.v1_8_R3.BlockPosition;
@@ -50,7 +51,7 @@ public class VirtualChunk implements IDataHolder {
 
 	private @Getter ChunkCoordIntPair coordPair;
 
-	private @Getter Chunk chunk;
+	private Chunk chunk;
 	private @Getter VirtualEnvironment environment;
 	private World world;
 	private Section[] sections = new Section[16];
@@ -101,12 +102,22 @@ public class VirtualChunk implements IDataHolder {
 		return (sectionMask & (1 << sectionIndex)) > 0;
 	}
 
+	public Chunk getChunk() {
+		if (this.chunk != null)
+			return this.chunk;
+		// try to load it again if it is not loaded!
+		this.chunk = world.getChunkAt(coordPair.x, coordPair.z);
+		return this.chunk;
+	}
+
 	public boolean setBlock(BlockPosition pos, IBlockData blockData) {
 		byte relX = (byte) (pos.getX() & 15);
 		byte relZ = (byte) (pos.getZ() & 15);
 		byte yPos = (byte) (pos.getY() >> 4);
 
-		if (pos.getX() >> 4 != chunk.locX || pos.getZ() >> 4 != chunk.locZ) {
+		Debug.log("Checking if coordinate set is inside chunk: " + (pos.getX() >> 4) + " != " + coordPair.x + " || "
+				+ (pos.getZ() >> 4) + " != " + coordPair.z);
+		if (pos.getX() >> 4 != coordPair.x || pos.getZ() >> 4 != coordPair.z) {
 			Bukkit.getLogger().warning(
 					"setBlock called on VirtualChunk even though the reference position was not in the virtualized chunk.");
 			return false;
@@ -127,7 +138,7 @@ public class VirtualChunk implements IDataHolder {
 			if (block == Blocks.AIR)
 				return false;
 
-			ChunkSection chunkSection = chunk.getSections()[yPos];
+			ChunkSection chunkSection = getChunk().getSections()[yPos];
 			if (chunkSection == null)
 				chunkSection = new ChunkSection(yPos, !world.worldProvider.o());
 			section = new Section(chunkSection);
@@ -183,6 +194,8 @@ public class VirtualChunk implements IDataHolder {
 	@Override
 	public void deserialize(DataInputStream stream) throws IOException {
 		this.coordPair = new ChunkCoordIntPair(stream.readInt(), stream.readInt());
+
+		Debug.log("Deserializing chunk @ " + coordPair.x + " , " + coordPair.z);
 		this.chunk = world.getChunkAt(coordPair.x, coordPair.z);
 
 		this.sectionMask = stream.readChar();
@@ -198,6 +211,7 @@ public class VirtualChunk implements IDataHolder {
 	public void serialize(DataOutputStream stream) throws IOException {
 		stream.writeInt(coordPair.x);
 		stream.writeInt(coordPair.z);
+		Debug.log("Serializing chunk @ " + coordPair.x + " , " + coordPair.z);
 
 		stream.writeChar(sectionMask);
 		for (Section virtualChunkSection : sections) {
@@ -221,8 +235,8 @@ public class VirtualChunk implements IDataHolder {
 		PacketPlayOutMapChunk packet = new PacketPlayOutMapChunk();
 
 		try {
-			xCoordField.set(packet, chunk.locX);
-			zCoordField.set(packet, chunk.locZ);
+			xCoordField.set(packet, coordPair.x);
+			zCoordField.set(packet, coordPair.z);
 			chunkMapField.set(packet, chunkMap);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			e.printStackTrace();
@@ -244,7 +258,7 @@ public class VirtualChunk implements IDataHolder {
 					arraylist.add(section);
 				}
 			} else {
-				ChunkSection chunkSection = chunk.getSections()[j];
+				ChunkSection chunkSection = getChunk().getSections()[j];
 				if (chunkSection == null)
 					continue;
 				Section section = new Section(chunkSection);
@@ -282,7 +296,7 @@ public class VirtualChunk implements IDataHolder {
 
 		if (includeBiome) {
 			j += lightArray.length;
-			System.arraycopy(chunk.getBiomeIndex(), 0, chunkMap.a, j, 256);
+			System.arraycopy(getChunk().getBiomeIndex(), 0, chunkMap.a, j, 256);
 		}
 
 		return chunkMap;

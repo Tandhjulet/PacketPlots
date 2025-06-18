@@ -27,7 +27,7 @@ public class BlockDigPacketModifier extends PacketInterceptor<PacketPlayInBlockD
 		BlockPosition pos = packet.a();
 		Chunk chunk = ((CraftWorld) env.getWorld()).getHandle().getChunkAtWorldCoords(pos);
 
-		VirtualChunk virtualChunk = env.getVirtualChunks().get(Utils.getCoordHash(chunk.locX, chunk.locZ));
+		VirtualChunk virtualChunk = env.getVirtualChunks().get(Utils.getChunkCoordHash(chunk.locX, chunk.locZ));
 		if (virtualChunk == null)
 			return false;
 

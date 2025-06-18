@@ -17,10 +17,6 @@ public class Utils {
 	private static Field destroyPosition;
 	private static Field force;
 
-	private static Field hasDestroyedPosition;
-	private static Field hasDestroyed;
-	private static Field hasDestoyedDigTick;
-
 	public static int getLastDigTick(PlayerInteractManager manager) {
 		try {
 			return (int) lastDigTick.get(manager);
@@ -80,39 +76,6 @@ public class Utils {
 		}
 	}
 
-	public static void setHasDestroyed(PlayerInteractManager manager, boolean to) {
-		try {
-			hasDestroyed.set(manager, to);
-		} catch (IllegalArgumentException | IllegalAccessException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public static void setHasDestroyedPosition(PlayerInteractManager manager, BlockPosition to) {
-		try {
-			hasDestroyedPosition.set(manager, to);
-		} catch (IllegalArgumentException | IllegalAccessException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public static void setHasDestoyedDigTick(PlayerInteractManager manager, int to) {
-		try {
-			hasDestoyedDigTick.set(manager, to);
-		} catch (IllegalArgumentException | IllegalAccessException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public static boolean getHasDestroyed(PlayerInteractManager manager) {
-		try {
-			return (boolean) hasDestroyed.get(manager);
-		} catch (IllegalArgumentException | IllegalAccessException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
 	public static void setForce(PlayerInteractManager manager, int to) {
 		try {
 			force.set(manager, to);
@@ -135,12 +98,6 @@ public class Utils {
 			destroyPosition = PlayerInteractManager.class.getDeclaredField("f");
 			destroyPosition.setAccessible(true);
 
-			hasDestroyed = PlayerInteractManager.class.getDeclaredField("h");
-			hasDestroyed.setAccessible(true);
-
-			hasDestroyedPosition = PlayerInteractManager.class.getDeclaredField("i");
-			hasDestroyedPosition.setAccessible(true);
-
 			force = PlayerInteractManager.class.getDeclaredField("k");
 			force.setAccessible(true);
 		} catch (NoSuchFieldException | SecurityException e) {
@@ -150,14 +107,14 @@ public class Utils {
 	}
 
 	// chunk utils
-	public static int getCoordHash(int x, int z) {
+	public static int getChunkCoordHash(int x, int z) {
 		int xHash = 1664525 * x + 1013904223;
 		int zHash = 1664525 * (z ^ -559038737) + 1013904223;
 		return xHash ^ zHash;
 	}
 
 	public static int getChunkCoordHash(BlockPosition pos) {
-		return getCoordHash(pos.getX() >> 4, pos.getZ() >> 4);
+		return getChunkCoordHash(pos.getX() >> 4, pos.getZ() >> 4);
 	}
 
 	// coord utils
