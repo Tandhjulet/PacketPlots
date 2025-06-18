@@ -48,7 +48,6 @@ public class VirtualConnection {
 			channel.pipeline().addBefore("packet_handler", NETTY_PIPELINE_NAME, new PacketHandler());
 		}
 
-		environment.addConnection(player, this);
 		connections.put(player, this);
 	}
 
@@ -58,7 +57,6 @@ public class VirtualConnection {
 			channel.pipeline().remove(NETTY_PIPELINE_NAME);
 		}
 
-		environment.removeConnection(player);
 		connections.remove(player);
 	}
 

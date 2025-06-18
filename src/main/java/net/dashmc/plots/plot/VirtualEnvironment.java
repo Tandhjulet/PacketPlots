@@ -74,8 +74,6 @@ public class VirtualEnvironment implements IDataHolder {
 	private static final HashMap<Player, VirtualEnvironment> virtualEnvironments = new HashMap<>();
 	private static final File DATA_DIRECTORY = new File(PacketPlots.getInstance().getDataFolder(), "data");
 
-	private @Getter HashMap<EntityPlayer, VirtualConnection> connections = new HashMap<>();
-
 	// private @Getter HashMap<Integer, Entity> entities = new HashMap<>();
 	private @Getter HashMap<Integer, VirtualChunk> virtualChunks = new HashMap<>();
 	private @Getter final List<TileEntity> tileEntities = Lists.newArrayList();
@@ -220,25 +218,13 @@ public class VirtualEnvironment implements IDataHolder {
 		startVirtualization(nmsOwner);
 	}
 
-	public VirtualConnection getConnection(EntityPlayer player) {
-		return connections.get(player);
-	}
-
-	public void removeConnection(EntityPlayer player) {
-		connections.remove(player);
-	}
-
-	public void addConnection(EntityPlayer player, VirtualConnection conn) {
-		connections.put(player, conn);
-	}
-
 	public void stopVirtualization(EntityPlayer player) {
-		VirtualConnection.get(player).close();
-
 		getVirtualChunks().values().forEach((val) -> {
 			Packet<?> packet = new PacketPlayOutMapChunk(val.getChunk(), false, 65535);
 			player.playerConnection.sendPacket(packet);
 		});
+
+		VirtualConnection.get(player).close();
 	}
 
 	public void startVirtualization(EntityPlayer player) {
