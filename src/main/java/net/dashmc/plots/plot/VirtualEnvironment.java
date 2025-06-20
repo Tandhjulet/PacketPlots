@@ -219,12 +219,12 @@ public class VirtualEnvironment implements IDataHolder {
 	}
 
 	public void stopVirtualization(EntityPlayer player) {
+		VirtualConnection.get(player).close();
+
 		getVirtualChunks().values().forEach((val) -> {
 			Packet<?> packet = new PacketPlayOutMapChunk(val.getChunk(), false, 65535);
 			player.playerConnection.sendPacket(packet);
 		});
-
-		VirtualConnection.get(player).close();
 	}
 
 	public void startVirtualization(EntityPlayer player) {

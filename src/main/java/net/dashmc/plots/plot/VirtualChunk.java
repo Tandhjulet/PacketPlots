@@ -17,6 +17,7 @@ import com.google.common.collect.Lists;
 
 import lombok.Getter;
 import net.dashmc.plots.data.IDataHolder;
+import net.dashmc.plots.nbt.NBTHelper;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockContainer;
@@ -27,6 +28,8 @@ import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.ChunkSection;
 import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.IContainer;
+import net.minecraft.server.v1_8_R3.NBTReadLimiter;
+import net.minecraft.server.v1_8_R3.NBTTagCompound;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_8_R3.TileEntity;
 import net.minecraft.server.v1_8_R3.World;
@@ -75,6 +78,10 @@ public class VirtualChunk implements IDataHolder {
 			}
 
 			i++;
+		}
+
+		for (Map.Entry<BlockPosition, TileEntity> entry : chunk.getTileEntities().entrySet()) {
+			setBlock(entry.getKey(), Blocks.AIR.getBlockData());
 		}
 	}
 
@@ -205,6 +212,17 @@ public class VirtualChunk implements IDataHolder {
 
 			sections[i] = new Section(stream);
 		}
+
+		int tiles = stream.readInt();
+		for (int i = 0; i < tiles; i++) {
+			NBTTagCompound compound = NBTHelper.loadPayload(stream, allowedSections, new NBTReadLimiter(2097152L));
+			TileEntity tile = TileEntity.c(compound);
+
+			Debug.log("Loading tile with NBT " + compound.toString());
+
+			environment.getTileEntities().add(tile);
+			setTileEntity(tile.getPosition(), tile);
+		}
 	}
 
 	@Override
@@ -220,6 +238,20 @@ public class VirtualChunk implements IDataHolder {
 
 			virtualChunkSection.serialize(stream);
 		}
+
+		stream.writeInt(tileEntities.size());
+		tileEntities.forEach((pos, tile) -> {
+			try {
+				NBTTagCompound compound = new NBTTagCompound();
+				tile.b(compound);
+
+				Debug.log("Saved tile with NBT " + compound.toString());
+
+				NBTHelper.writePayload(stream, compound);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 
 	@Override

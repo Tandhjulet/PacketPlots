@@ -11,7 +11,6 @@ public class Debug {
 	public static void log(String obj) {
 		if (!log)
 			return;
-
 		logger.info(obj);
 	}
 
