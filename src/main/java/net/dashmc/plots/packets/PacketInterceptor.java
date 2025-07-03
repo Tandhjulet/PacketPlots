@@ -4,6 +4,7 @@ import net.dashmc.plots.packets.interceptors.BlockDigPacketModifier;
 import net.dashmc.plots.packets.interceptors.BlockPlacementPacketModifier;
 import net.dashmc.plots.packets.interceptors.MapChunkBulkPacketModifier;
 import net.dashmc.plots.packets.interceptors.MapChunkPacketModifier;
+import net.dashmc.plots.packets.interceptors.MovementPacketInterceptor;
 import net.dashmc.plots.packets.interceptors.UseEntityPacketModifier;
 import net.dashmc.plots.packets.interceptors.WindowClosePacketModifier;
 import net.dashmc.plots.plot.VirtualConnection;
@@ -13,7 +14,7 @@ public abstract class PacketInterceptor<T extends Packet<?>> {
 	public PacketInterceptor() {
 	}
 
-	public abstract boolean intercept(T packet, VirtualConnection environment);
+	public abstract boolean intercept(T packet, VirtualConnection connection);
 
 	public abstract Class<T> getClazz();
 
@@ -24,5 +25,6 @@ public abstract class PacketInterceptor<T extends Packet<?>> {
 		BlockPlacementPacketModifier.register();
 		UseEntityPacketModifier.register();
 		WindowClosePacketModifier.register();
+		// MovementPacketInterceptor.register();
 	}
 }
