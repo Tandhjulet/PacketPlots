@@ -25,6 +25,6 @@ public abstract class PacketInterceptor<T extends Packet<?>> {
 		BlockPlacementPacketModifier.register();
 		UseEntityPacketModifier.register();
 		WindowClosePacketModifier.register();
-		// MovementPacketInterceptor.register();
+		MovementPacketInterceptor.register();
 	}
 }

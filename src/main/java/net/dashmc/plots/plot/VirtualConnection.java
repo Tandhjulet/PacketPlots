@@ -7,6 +7,7 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import lombok.Getter;
+import lombok.Setter;
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.Packet;
@@ -16,6 +17,8 @@ import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
 @Getter
 public class VirtualConnection {
 	private static final HashMap<Class<?>, PacketInterceptor<?>> packetModifiers = new HashMap<>();
+
+	private @Setter boolean moved = false;
 
 	public static <T extends Packet<?>> void registerInterceptor(PacketInterceptor<T> modifier) {
 		packetModifiers.put(modifier.getClazz(), modifier);

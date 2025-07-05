@@ -2,11 +2,13 @@ package net.dashmc.plots.packets.interceptors;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
+import java.util.EnumSet;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.CraftServer;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
+import org.bukkit.entity.Player;
 import org.bukkit.util.NumberConversions;
 
 import net.dashmc.plots.events.VirtualPlayerMoveEvent;
@@ -45,9 +47,6 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 		if (virtualChunk == null)
 			return false;
 
-		float yaw = packet.d();
-		float pitch = packet.e();
-
 		EntityPlayer player = connection.getPlayer();
 		CraftPlayer bukkitPlayer = player.getBukkitEntity();
 
@@ -59,18 +58,19 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 			to.setZ(z);
 		}
 
-		if (packet.f()) {
-			to.setYaw(yaw);
-			to.setPitch(pitch);
+		if (packet.h()) {
+			to.setYaw(packet.d());
+			to.setPitch(packet.e());
 		}
 
-		double dx = x - from.getX();
-		double dy = y - from.getY();
-		double dz = z - from.getZ();
+		double dx = to.getX() - from.getX();
+		double dy = to.getY() - from.getY();
+		double dz = to.getZ() - from.getZ();
 
 		double delta = Math.pow(dx, 2) + Math.pow(dy, 2) + Math.pow(dz, 2);
+		float deltaAngle = Math.abs(from.getYaw() - to.getYaw()) + Math.abs(from.getPitch() - to.getPitch());
 
-		if (delta > 1f / 256 && !player.dead) {
+		if ((delta > 1f / 256 || deltaAngle > 10f) && !player.dead) {
 			// lastX = to.getX();
 			// lastY = to.getY();
 			// lastZ = to.getZ();
@@ -87,6 +87,11 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 			}
 		}
 
+		if (!connection.isMoved()) {
+			connection.setMoved(true);
+			return false;
+		}
+
 		if (player.dead)
 			return true;
 
@@ -97,11 +102,7 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 		}
 
 		// set last loc
-		setLocation(from, connection);
-
-		dx = to.getX() - from.getX();
-		dy = to.getY() - from.getY();
-		dz = to.getZ() - from.getZ();
+		setLocation(to, connection);
 
 		if (packet.g() && packet.b() == -999D)
 			packet.a(false);
@@ -116,12 +117,31 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 		// player.l();
 		player.setLocation(to.getX(), to.getY(), to.getZ(), to.getYaw(), to.getPitch());
 
-		String message = String.format(
-				"setting location of player to %f (%f), %f (%f), %f (%f)",
-				to.getX(), dx, to.getY(), dy, to.getZ(), dz);
+		String message = "";
+		try {
+			message = String.format(
+					packet.getClass().getSimpleName() + ": yaw: %f -> %f (last: %f), pitch: %f -> %f (last: %f)",
+					from.getYaw(), to.getYaw(), yaw.get(connection.getPlayer().playerConnection), from.getPitch(),
+					to.getPitch(), pitch.get(connection.getPlayer().playerConnection));
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
-		player.noclip = true;
-		player.move(dx, dy, dz);
+		// if (player.onGround && !packet.f() && dy > 0.0D) {
+		// player.bF();
+		// }
+
+		// player.a(player.getBoundingBox().c(dx, dy, dz));
+
+		// player.noclip = true;
+		// player.move(dx, dy, dz);
+		// player.noclip = false;
+
+		// player.onGround = packet.f();
+
+		// player.setLocation(to.getX(), to.getY(), to.getZ(), to.getYaw(),
+		// to.getPitch());
 
 		Debug.log(message);
 
@@ -135,8 +155,20 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 	private static Field yCoord;
 	private static Field zCoord;
 
+	private static Field yaw;
+	private static Field pitch;
+
+	private static Field hasMoved;
+	private static Field h;
+
 	static {
 		try {
+			hasMoved = PlayerConnection.class.getDeclaredField("hasMoved");
+			hasMoved.setAccessible(true);
+
+			h = PlayerConnection.class.getDeclaredField("h");
+			h.setAccessible(true);
+
 			xCoord = PlayerConnection.class.getDeclaredField("o");
 			yCoord = PlayerConnection.class.getDeclaredField("p");
 			zCoord = PlayerConnection.class.getDeclaredField("q");
@@ -144,6 +176,12 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 			xCoord.setAccessible(true);
 			yCoord.setAccessible(true);
 			zCoord.setAccessible(true);
+
+			yaw = PlayerConnection.class.getDeclaredField("lastYaw");
+			pitch = PlayerConnection.class.getDeclaredField("lastPitch");
+
+			yaw.setAccessible(true);
+			pitch.setAccessible(true);
 		} catch (NoSuchFieldException | SecurityException e) {
 			e.printStackTrace();
 		}
@@ -157,9 +195,12 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 		double z = loc.getZ();
 
 		try {
-			xCoord.set(conn, x);
-			yCoord.set(conn, y);
-			zCoord.set(conn, z);
+			xCoord.setDouble(conn, x);
+			yCoord.setDouble(conn, y);
+			zCoord.setDouble(conn, z);
+
+			yaw.setFloat(conn, loc.getYaw());
+			pitch.setFloat(conn, loc.getPitch());
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			e.printStackTrace();
 		}
@@ -173,8 +214,10 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 			double z = (double) zCoord.get(conn);
 			double x = (double) xCoord.get(conn);
 
-			return new Location(vConn.getEnvironment().getWorld(), x, y, z, vConn.getPlayer().yaw,
-					vConn.getPlayer().pitch);
+			float cYaw = (float) yaw.get(conn);
+			float cPitch = (float) pitch.get(conn);
+
+			return new Location(vConn.getEnvironment().getWorld(), x, y, z, cYaw, cPitch);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			e.printStackTrace();
 			return null;
