@@ -3,7 +3,6 @@ package net.dashmc.plots.packets.interceptors;
 import java.lang.reflect.Method;
 
 import org.bukkit.craftbukkit.v1_8_R3.event.CraftEventFactory;
-
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
@@ -14,10 +13,11 @@ import net.minecraft.server.v1_8_R3.Container;
 import net.minecraft.server.v1_8_R3.ContainerChest;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
+import net.minecraft.server.v1_8_R3.IInventory;
+import net.minecraft.server.v1_8_R3.InventoryLargeChest;
 import net.minecraft.server.v1_8_R3.PacketPlayInCloseWindow;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockAction;
 import net.minecraft.server.v1_8_R3.PlayerInventory;
-import net.minecraft.server.v1_8_R3.TileEntity;
 import net.minecraft.server.v1_8_R3.TileEntityChest;
 
 public class WindowClosePacketModifier extends PacketInterceptor<PacketPlayInCloseWindow> {
@@ -28,35 +28,79 @@ public class WindowClosePacketModifier extends PacketInterceptor<PacketPlayInClo
 		VirtualEnvironment environment = connection.getEnvironment();
 		EntityPlayer player = connection.getPlayer();
 		CraftEventFactory.handleInventoryCloseEvent(player);
+		PlayerInventory playerInventory = player.inventory;
 
 		if (!(player.activeContainer instanceof ContainerChest))
 			return false;
 
 		ContainerChest chest = (ContainerChest) player.activeContainer;
-		TileEntity tile = (TileEntity) chest.e();
-		BlockPosition pos = tile.getPosition();
 
-		if (!environment.isValidLocation(pos))
+		boolean success = false;
+		if (chest.e() instanceof TileEntityChest) { // single chest
+			if (!isChestLocationValid(chest.e(), environment))
+				return false;
+
+			success = closeContainer(player, chest.e(), environment);
+		} else if (chest.e() instanceof InventoryLargeChest) { // chest consisting of two chests
+			InventoryLargeChest doubleChest = (InventoryLargeChest) chest.e();
+
+			boolean isLeftValid = isChestLocationValid(doubleChest.left, environment);
+			boolean isRightValid = isChestLocationValid(doubleChest.right, environment);
+			if (isLeftValid ^ isRightValid) {
+				throw new RuntimeException("Location of double chest is half outside of virtual environment ("
+						+ connection.getEnvironment().getOwnerUuid() + ")");
+			} else if (!isLeftValid && !isRightValid)
+				return false;
+
+			success = closeContainer(player, doubleChest.left, environment)
+					&& closeContainer(player, doubleChest.right, environment);
+		}
+
+		if (success) {
+			if (playerInventory.getCarried() != null) {
+				player.drop(playerInventory.getCarried(), false);
+				playerInventory.setCarried(null);
+			}
+
+			player.activeContainer = player.defaultContainer;
+			return true;
+		}
+		// intercept packet to prevent dupes - do nothing tho
+		return true;
+	}
+
+	public boolean isChestLocationValid(IInventory inventory, VirtualEnvironment env) {
+		if (!(inventory instanceof TileEntityChest))
 			return false;
 
-		Block block = environment.getType(pos).getBlock();
+		TileEntityChest chest = (TileEntityChest) inventory;
+		BlockPosition pos = chest.getPosition();
+		if (!env.isValidLocation(pos))
+			return false;
+		return env.getType(pos).getBlock() instanceof BlockChest;
+	}
 
-		if (!(block instanceof BlockChest) || !(tile instanceof TileEntityChest))
-			throw new RuntimeException("Block isn't a chest... if this ever happens, dupes might be possible.");
+	public boolean closeContainer(EntityHuman human, IInventory inventory, VirtualEnvironment env) {
+		if (!(inventory instanceof TileEntityChest))
+			return false;
 
-		TileEntityChest tileEntityChest = (TileEntityChest) tile;
+		TileEntityChest chest = (TileEntityChest) inventory;
+		BlockPosition pos = chest.getPosition();
+		if (!env.isValidLocation(pos))
+			return false;
+		else if (human.isSpectator())
+			return true;
 
-		PlayerInventory playerInventory = player.inventory;
-		if (playerInventory.getCarried() != null) {
-			player.drop(playerInventory.getCarried(), false);
-			playerInventory.setCarried(null);
-		}
-		tileEntityChest.l--;
+		// let them close even though it wasnt a success
+		if (!(env.getType(pos).getBlock() instanceof BlockChest))
+			return true;
 
-		PacketPlayOutBlockAction chestOpenPacket = new PacketPlayOutBlockAction(pos, block, 1, 0);
-		player.playerConnection.sendPacket(chestOpenPacket);
+		chest.l--;
 
-		player.activeContainer = player.defaultContainer;
+		Block block = env.getType(chest.getPosition()).getBlock();
+		PacketPlayOutBlockAction chestClosePacket = new PacketPlayOutBlockAction(chest.getPosition(), block, 1, 0);
+		env.broadcastPacket(chestClosePacket);
+
 		return true;
 	}
 

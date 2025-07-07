@@ -57,6 +57,7 @@ import net.minecraft.server.v1_8_R3.ItemSword;
 import net.minecraft.server.v1_8_R3.Material;
 import net.minecraft.server.v1_8_R3.MinecraftServer;
 import net.minecraft.server.v1_8_R3.Packet;
+import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_8_R3.TileEntity;
@@ -75,6 +76,7 @@ public class VirtualEnvironment implements IDataHolder {
 	private static final File DATA_DIRECTORY = new File(PacketPlots.getInstance().getDataFolder(), "data");
 
 	// private @Getter HashMap<Integer, Entity> entities = new HashMap<>();
+	private @Getter final HashSet<VirtualConnection> connections = new HashSet<>();
 	private @Getter HashMap<Integer, VirtualChunk> virtualChunks = new HashMap<>();
 	private @Getter final List<TileEntity> tileEntities = Lists.newArrayList();
 	private @Getter World world;
@@ -184,6 +186,12 @@ public class VirtualEnvironment implements IDataHolder {
 		return itemStack.d(block) || itemStack.x();
 	}
 
+	public void broadcastPacket(Packet<PacketListenerPlayOut> packet) {
+		for (VirtualConnection conn : connections) {
+			conn.getPlayer().playerConnection.sendPacket(packet);
+		}
+	}
+
 	public void close() {
 		save();
 
@@ -219,7 +227,9 @@ public class VirtualEnvironment implements IDataHolder {
 	}
 
 	public void stopVirtualization(EntityPlayer player) {
-		VirtualConnection.get(player).close();
+		VirtualConnection conn = VirtualConnection.get(player);
+		connections.remove(conn);
+		conn.close();
 
 		getVirtualChunks().values().forEach((val) -> {
 			Packet<?> packet = new PacketPlayOutMapChunk(val.getChunk(), false, 65535);
@@ -228,7 +238,8 @@ public class VirtualEnvironment implements IDataHolder {
 	}
 
 	public void startVirtualization(EntityPlayer player) {
-		VirtualConnection.establish(player, this);
+		VirtualConnection conn = VirtualConnection.establish(player, this);
+		connections.add(conn);
 
 		getVirtualChunks().values().forEach((val) -> {
 			player.playerConnection

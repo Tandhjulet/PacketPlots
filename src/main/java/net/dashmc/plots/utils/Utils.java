@@ -130,4 +130,8 @@ public class Utils {
 	public static Location convertPosToLoc(org.bukkit.World world, BlockPosition pos) {
 		return new Location(world, pos.getX(), pos.getY(), pos.getZ());
 	}
+
+	public static BlockPosition convertLocToPos(Location loc) {
+		return new BlockPosition(loc.getX(), loc.getY(), loc.getZ());
+	}
 }
