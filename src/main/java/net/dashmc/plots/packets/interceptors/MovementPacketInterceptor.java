@@ -2,13 +2,9 @@ package net.dashmc.plots.packets.interceptors;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
-import java.util.EnumSet;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_8_R3.CraftServer;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
-import org.bukkit.entity.Player;
 import org.bukkit.util.NumberConversions;
 
 import net.dashmc.plots.events.VirtualPlayerMoveEvent;
@@ -46,6 +42,10 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 				.get(Utils.getChunkCoordHash(((int) x) >> 4, ((int) z) >> 4));
 		if (virtualChunk == null)
 			return false;
+		else if (!connection.isMoved()) {
+			connection.setMoved(true);
+			return false;
+		}
 
 		EntityPlayer player = connection.getPlayer();
 		CraftPlayer bukkitPlayer = player.getBukkitEntity();
@@ -87,11 +87,6 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 			}
 		}
 
-		if (!connection.isMoved()) {
-			connection.setMoved(true);
-			return false;
-		}
-
 		if (player.dead)
 			return true;
 
@@ -116,37 +111,6 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 
 		// player.l();
 		player.setLocation(to.getX(), to.getY(), to.getZ(), to.getYaw(), to.getPitch());
-
-		String message = "";
-		try {
-			message = String.format(
-					packet.getClass().getSimpleName() + ": yaw: %f -> %f (last: %f), pitch: %f -> %f (last: %f)",
-					from.getYaw(), to.getYaw(), yaw.get(connection.getPlayer().playerConnection), from.getPitch(),
-					to.getPitch(), pitch.get(connection.getPlayer().playerConnection));
-		} catch (IllegalArgumentException | IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		// if (player.onGround && !packet.f() && dy > 0.0D) {
-		// player.bF();
-		// }
-
-		// player.a(player.getBoundingBox().c(dx, dy, dz));
-
-		// player.noclip = true;
-		// player.move(dx, dy, dz);
-		// player.noclip = false;
-
-		// player.onGround = packet.f();
-
-		// player.setLocation(to.getX(), to.getY(), to.getZ(), to.getYaw(),
-		// to.getPitch());
-
-		Debug.log(message);
-
-		if (player.viewingCredits)
-			return true;
 
 		return true;
 	}
