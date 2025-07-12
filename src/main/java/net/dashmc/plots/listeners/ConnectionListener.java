@@ -11,8 +11,10 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import net.dashmc.plots.PacketPlots;
+import net.dashmc.plots.player.VirtualPlayerInteractManager;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.utils.Debug;
 
 public class ConnectionListener implements Listener {
 
@@ -20,8 +22,11 @@ public class ConnectionListener implements Listener {
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		Player player = event.getPlayer();
 		try {
+			Debug.log(((CraftPlayer) player).getHandle().playerInteractManager.getClass().getName());
+			VirtualPlayerInteractManager.inject(player);
+
 			new VirtualEnvironment(player);
-		} catch (IOException e) {
+		} catch (IOException | IllegalArgumentException | IllegalAccessException e) {
 			Bukkit.getLogger()
 					.severe("A severe error occured whilst loading the PacketPlot of " + player.getUniqueId());
 			e.printStackTrace();

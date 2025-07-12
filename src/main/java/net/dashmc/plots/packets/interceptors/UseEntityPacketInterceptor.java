@@ -6,7 +6,7 @@ import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.minecraft.server.v1_8_R3.PacketPlayInUseEntity;
 
-public class UseEntityPacketModifier extends PacketInterceptor<PacketPlayInUseEntity> {
+public class UseEntityPacketInterceptor extends PacketInterceptor<PacketPlayInUseEntity> {
 
 	@Override
 	public boolean intercept(PacketPlayInUseEntity packet, VirtualConnection environment) {
@@ -20,7 +20,7 @@ public class UseEntityPacketModifier extends PacketInterceptor<PacketPlayInUseEn
 	}
 
 	public static void register() {
-		VirtualConnection.registerInterceptor(new UseEntityPacketModifier());
+		VirtualConnection.registerInterceptor(new UseEntityPacketInterceptor());
 	}
 
 }

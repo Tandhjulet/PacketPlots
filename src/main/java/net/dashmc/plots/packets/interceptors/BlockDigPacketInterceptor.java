@@ -14,8 +14,9 @@ import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.Material;
 import net.minecraft.server.v1_8_R3.PacketPlayInBlockDig;
 import net.minecraft.server.v1_8_R3.PacketPlayInBlockDig.EnumPlayerDigType;
+import net.minecraft.server.v1_8_R3.TileEntity;
 
-public class BlockDigPacketModifier extends PacketInterceptor<PacketPlayInBlockDig> {
+public class BlockDigPacketInterceptor extends PacketInterceptor<PacketPlayInBlockDig> {
 
 	@Override
 	// https://github.com/Attano/Spigot-1.8/blob/9db48bc15e203179554b8d992ca6b0a528c8d300/net/minecraft/server/v1_8_R3/PlayerConnection.java#L544
@@ -30,6 +31,14 @@ public class BlockDigPacketModifier extends PacketInterceptor<PacketPlayInBlockD
 		VirtualChunk virtualChunk = env.getVirtualChunks().get(Utils.getChunkCoordHash(chunk.locX, chunk.locZ));
 		if (virtualChunk == null)
 			return false;
+		else if (!env.getOwnerUuid().equals(player.getUniqueID())) {
+			player.playerConnection
+					.sendPacket(new VirtualBlockChangePacket(env, pos).getPacket());
+			TileEntity tile = env.getTileEntity(pos);
+			if (tile != null)
+				player.playerConnection.sendPacket(tile.getUpdatePacket());
+			return true;
+		}
 
 		switch (packet.c()) {
 			case DROP_ITEM:
@@ -93,6 +102,6 @@ public class BlockDigPacketModifier extends PacketInterceptor<PacketPlayInBlockD
 	}
 
 	public static void register() {
-		VirtualConnection.registerInterceptor(new BlockDigPacketModifier());
+		VirtualConnection.registerInterceptor(new BlockDigPacketInterceptor());
 	}
 }

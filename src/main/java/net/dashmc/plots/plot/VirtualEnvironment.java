@@ -34,6 +34,7 @@ import net.dashmc.plots.events.VirtualBlockCanBuildEvent;
 import net.dashmc.plots.events.VirtualBlockDamageEvent;
 import net.dashmc.plots.events.VirtualInteractEvent;
 import net.dashmc.plots.packets.extensions.VirtualBlockChangePacket;
+import net.dashmc.plots.player.VirtualPlayerInteractManager;
 import net.dashmc.plots.utils.Debug;
 import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
@@ -91,6 +92,10 @@ public class VirtualEnvironment implements IDataHolder {
 
 	public static VirtualEnvironment get(Player player) {
 		return virtualEnvironments.get(player);
+	}
+
+	public static VirtualEnvironment get(EntityPlayer player) {
+		return get(player.getBukkitEntity());
 	}
 
 	public VirtualEnvironment(Player player) throws IOException {
@@ -504,7 +509,7 @@ public class VirtualEnvironment implements IDataHolder {
 
 			Debug.log("startDestroy called, is interact event cancelled? " + event.isCancelled());
 
-			if (event.isCancelled() || !getOwnerUuid().equals(player.getUniqueID())) {
+			if (event.isCancelled()) {
 				player.playerConnection
 						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
 				TileEntity tile = getTileEntity(pos);
@@ -537,7 +542,9 @@ public class VirtualEnvironment implements IDataHolder {
 				}
 			}
 
-			Utils.setLastDigTick(player.playerInteractManager, Utils.getCurrentTick(player.playerInteractManager));
+			VirtualPlayerInteractManager playerInteractManager = (VirtualPlayerInteractManager) player.playerInteractManager;
+			playerInteractManager.setLastDigTick(playerInteractManager.getCurrentTick());
+
 			float f = 1f;
 
 			Debug.log("Setting last dig tick");
@@ -589,10 +596,11 @@ public class VirtualEnvironment implements IDataHolder {
 				breakBlock(player, pos);
 			} else { // https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L190
 				Debug.log("Setting destroy-fields, pos " + pos);
+				VirtualPlayerInteractManager interactManager = (VirtualPlayerInteractManager) player.playerInteractManager;
 
-				Utils.setIsDestroying(player.playerInteractManager, true);
-				Utils.setDestroyPosition(player.playerInteractManager, pos);
-				Utils.setForce(player.playerInteractManager, (int) (f * 10f));
+				interactManager.setIsDestroying(true);
+				interactManager.setDestroyPosition(pos);
+				interactManager.setForce((int) (f * 10f));
 
 				broadcastPacket(new PacketPlayOutBlockBreakAnimation(player.getId(), pos, (int) (f * 10f)));
 			}
@@ -602,19 +610,21 @@ public class VirtualEnvironment implements IDataHolder {
 
 		// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L203
 		public void stopDestroy(EntityPlayer player, BlockPosition pos) {
+			VirtualPlayerInteractManager interactManager = (VirtualPlayerInteractManager) player.playerInteractManager;
+
 			Debug.log("stop destroy at pos: " + pos.toString() + ", destroy pos: "
-					+ Utils.getDestroyPosition(player.playerInteractManager));
-			if (pos.equals(Utils.getDestroyPosition(player.playerInteractManager))) {
-				Utils.setCurrentTick(player.playerInteractManager, MinecraftServer.currentTick);
-				int diggingFor = Utils.getCurrentTick(player.playerInteractManager)
-						- Utils.getLastDigTick(player.playerInteractManager);
+					+ interactManager.getDestroyPosition());
+			if (pos.equals(interactManager.getDestroyPosition())) {
+				interactManager.setCurrentTick(MinecraftServer.currentTick);
+				int diggingFor = interactManager.getCurrentTick() - interactManager.getLastDigTick();
+
 				Block block = getType(pos).getBlock();
 				if (block.getMaterial() != Material.AIR) {
 					float f = block.getDamage(player, nmsWorld, pos) * (float) (diggingFor + 1);
 					Debug.log("Trying to break block, force: " + f + " >= 0.7");
 
 					if (f >= 0.7F) {
-						Utils.setIsDestroying(player.playerInteractManager, false);
+						interactManager.setIsDestroying(false);
 						broadcastPacket(new PacketPlayOutBlockBreakAnimation(player.getId(), pos, -1));
 						breakBlock(player, pos);
 					} else { // TODO:
@@ -629,10 +639,12 @@ public class VirtualEnvironment implements IDataHolder {
 
 		// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L231
 		public void abortDestroy(EntityPlayer player) {
-			Debug.log("abort destroy");
-			Utils.setIsDestroying(player.playerInteractManager, false);
+			VirtualPlayerInteractManager interactManager = (VirtualPlayerInteractManager) player.playerInteractManager;
+			interactManager.setIsDestroying(false);
 
-			BlockPosition pos = Utils.getDestroyPosition(player.playerInteractManager);
+			Debug.log("abort destroy");
+
+			BlockPosition pos = interactManager.getDestroyPosition();
 			broadcastPacket(new PacketPlayOutBlockBreakAnimation(player.getId(), pos, -1));
 			return;
 		}

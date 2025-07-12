@@ -20,7 +20,7 @@ import net.minecraft.server.v1_8_R3.PacketPlayOutBlockAction;
 import net.minecraft.server.v1_8_R3.PlayerInventory;
 import net.minecraft.server.v1_8_R3.TileEntityChest;
 
-public class WindowClosePacketModifier extends PacketInterceptor<PacketPlayInCloseWindow> {
+public class WindowClosePacketInterceptor extends PacketInterceptor<PacketPlayInCloseWindow> {
 	private static Method closeContainerMethod;
 
 	@Override
@@ -110,7 +110,7 @@ public class WindowClosePacketModifier extends PacketInterceptor<PacketPlayInClo
 	}
 
 	public static void register() {
-		VirtualConnection.registerInterceptor(new WindowClosePacketModifier());
+		VirtualConnection.registerInterceptor(new WindowClosePacketInterceptor());
 	}
 
 	static {

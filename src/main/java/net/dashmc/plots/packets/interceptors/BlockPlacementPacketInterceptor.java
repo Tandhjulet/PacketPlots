@@ -21,7 +21,7 @@ import net.minecraft.server.v1_8_R3.Slot;
 
 // https://minecraft.wiki/w/Protocol?oldid=2772100#Player_Digging
 // https://github.com/Attano/Spigot-1.8/blob/9db48bc15e203179554b8d992ca6b0a528c8d300/net/minecraft/server/v1_8_R3/PlayerConnection.java#L638
-public class BlockPlacementPacketModifier extends PacketInterceptor<PacketPlayInBlockPlace> {
+public class BlockPlacementPacketInterceptor extends PacketInterceptor<PacketPlayInBlockPlace> {
 
 	@Override
 	public boolean intercept(PacketPlayInBlockPlace packet, VirtualConnection conn) {
@@ -108,6 +108,6 @@ public class BlockPlacementPacketModifier extends PacketInterceptor<PacketPlayIn
 	}
 
 	public static void register() {
-		VirtualConnection.registerInterceptor(new BlockPlacementPacketModifier());
+		VirtualConnection.registerInterceptor(new BlockPlacementPacketInterceptor());
 	}
 }

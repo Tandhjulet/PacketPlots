@@ -15,7 +15,7 @@ import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunkBulk;
 
 // https://minecraft.wiki/w/Protocol?oldid=2772100#Map_Chunk_Bulk
-public class MapChunkBulkPacketModifier extends PacketInterceptor<PacketPlayOutMapChunkBulk> {
+public class MapChunkBulkPacketInterceptor extends PacketInterceptor<PacketPlayOutMapChunkBulk> {
 	protected static final HashSet<Integer> coordPairs = new HashSet<>();
 	private static Field xCoordField;
 	private static Field zCoordField;
@@ -64,7 +64,7 @@ public class MapChunkBulkPacketModifier extends PacketInterceptor<PacketPlayOutM
 	}
 
 	public static void register() {
-		VirtualConnection.registerInterceptor(new MapChunkBulkPacketModifier());
+		VirtualConnection.registerInterceptor(new MapChunkBulkPacketInterceptor());
 	}
 
 	static {

@@ -10,7 +10,7 @@ import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 
 // https://minecraft.wiki/w/Protocol?oldid=2772100#Chunk_Data
-public class MapChunkPacketModifier extends PacketInterceptor<PacketPlayOutMapChunk> {
+public class MapChunkPacketInterceptor extends PacketInterceptor<PacketPlayOutMapChunk> {
 	private static Field xCoordField;
 	private static Field zCoordField;
 	private static Field chunkMapField;
@@ -24,7 +24,7 @@ public class MapChunkPacketModifier extends PacketInterceptor<PacketPlayOutMapCh
 			int zCoord = zCoordField.getInt(packet);
 
 			int hash = Utils.getChunkCoordHash(xCoord, zCoord);
-			if (MapChunkBulkPacketModifier.coordPairs.contains(hash)) {
+			if (MapChunkBulkPacketInterceptor.coordPairs.contains(hash)) {
 				VirtualChunk chunk = environment.getVirtualChunks().get(hash);
 				chunkMapField.set(packet, chunk.getChunkMap(65535, true, true));
 			}
@@ -41,7 +41,7 @@ public class MapChunkPacketModifier extends PacketInterceptor<PacketPlayOutMapCh
 	}
 
 	public static void register() {
-		VirtualConnection.registerInterceptor(new MapChunkPacketModifier());
+		VirtualConnection.registerInterceptor(new MapChunkPacketInterceptor());
 	}
 
 	static {
