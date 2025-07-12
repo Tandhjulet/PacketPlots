@@ -32,7 +32,7 @@ public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 
 		if (itileinventory != null) {
 			PacketPlayOutBlockAction chestOpenPacket = new PacketPlayOutBlockAction(blockposition, block, 1, 1);
-			((EntityPlayer) entityhuman).playerConnection.sendPacket(chestOpenPacket);
+			environment.broadcastPacket(chestOpenPacket);
 
 			entityhuman.openContainer(itileinventory);
 			if (block.b == 0) {
