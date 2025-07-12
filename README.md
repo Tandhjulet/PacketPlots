@@ -3,8 +3,6 @@
 TODO:
 
 -   autosave på andet thread (interval i config)
--   visits
-    -   flere spillere tilknyttet èt packet plot
+-   ingen entities kan spawne i plot
 -   fremvisning
--   min/max lokationsdefinition af plots
-
+    -   min/max lokationsdefinition af plots
