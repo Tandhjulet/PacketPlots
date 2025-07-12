@@ -2,6 +2,9 @@ package net.dashmc.plots.plot;
 
 import java.util.HashMap;
 
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
+import org.bukkit.entity.Player;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -27,6 +30,10 @@ public class VirtualConnection {
 	private static final String NETTY_PIPELINE_NAME = "VirtualEnvironment";
 	private static HashMap<EntityPlayer, VirtualConnection> connections = new HashMap<>();
 
+	public static VirtualConnection get(Player player) {
+		return get(((CraftPlayer) player).getHandle());
+	}
+
 	public static VirtualConnection get(EntityPlayer player) {
 		return connections.get(player);
 	}
@@ -34,12 +41,29 @@ public class VirtualConnection {
 	private VirtualConnection(EntityPlayer player, VirtualEnvironment environment) {
 		this.player = player;
 		this.environment = environment;
+		this.original = environment;
 
 		open();
 	}
 
 	private EntityPlayer player;
 	private VirtualEnvironment environment;
+	private VirtualEnvironment original;
+
+	@Setter
+	private boolean isVisiting = false;
+
+	public void visit(VirtualEnvironment other) {
+		if (other.equals(environment))
+			return;
+
+		setVisiting(!other.equals(original));
+		environment.getConnections().remove(this);
+		other.getConnections().add(this);
+		other.render(player);
+
+		this.environment = other;
+	}
 
 	public static VirtualConnection establish(EntityPlayer player, VirtualEnvironment environment) {
 		return new VirtualConnection(player, environment);

@@ -237,14 +237,25 @@ public class VirtualEnvironment implements IDataHolder {
 		});
 	}
 
+	public void startVirtualization(Player player) {
+		startVirtualization(((CraftPlayer) player).getHandle());
+	}
+
+	public void stopVirtualization(Player player) {
+		stopVirtualization(((CraftPlayer) player).getHandle());
+	}
+
 	public void startVirtualization(EntityPlayer player) {
 		VirtualConnection conn = VirtualConnection.establish(player, this);
 		connections.add(conn);
 
-		getVirtualChunks().values().forEach((val) -> {
-			player.playerConnection
-					.sendPacket(val.getPacket(65535, !((CraftWorld) world).getHandle().worldProvider.o(), false));
+		render(player);
+	}
 
+	public void render(EntityPlayer to) {
+		getVirtualChunks().values().forEach((val) -> {
+			to.playerConnection
+					.sendPacket(val.getPacket(65535, !((CraftWorld) world).getHandle().worldProvider.o(), false));
 		});
 	}
 
@@ -411,6 +422,9 @@ public class VirtualEnvironment implements IDataHolder {
 	public class InteractManager {
 		public boolean interact(EntityHuman human, VirtualEnvironment env, ItemStack item, BlockPosition pos,
 				EnumDirection dir, float cX, float cY, float cZ) {
+			if (!env.getOwnerUuid().equals(human.getUniqueID()))
+				return false;
+
 			IBlockData blockData = env.getType(pos);
 			boolean result = false;
 

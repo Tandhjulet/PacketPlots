@@ -46,6 +46,17 @@
 			<artifactId>okaeri-configs-yaml-bukkit</artifactId>
 			<version>5.0.5</version>
 		</dependency>
+
+		<dependency>
+			<groupId>eu.okaeri</groupId>
+			<artifactId>okaeri-commands-bukkit</artifactId>
+			<version>0.9.13</version>
+		</dependency>
+		<dependency>
+			<groupId>eu.okaeri</groupId>
+			<artifactId>okaeri-commands-injector</artifactId>
+			<version>0.9.13</version>
+		</dependency>
 	</dependencies>
 
 	<profiles>
@@ -65,6 +76,17 @@
 						<version>2.3.1</version>
 						<configuration>
 							<outputDirectory>C:\Users\Tandhjul\Desktop\1.8.9\plugins</outputDirectory>
+						</configuration>
+					</plugin>
+
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-compiler-plugin</artifactId>
+						<version>3.8.1</version>
+						<configuration>
+							<compilerArgs>
+								<arg>-parameters</arg>
+							</compilerArgs>
 						</configuration>
 					</plugin>
 				</plugins>
