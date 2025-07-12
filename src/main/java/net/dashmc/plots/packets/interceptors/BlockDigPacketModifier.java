@@ -65,7 +65,7 @@ public class BlockDigPacketModifier extends PacketInterceptor<PacketPlayInBlockD
 				} else if (packet.c() == EnumPlayerDigType.STOP_DESTROY_BLOCK) {
 					env.getInteractManager().stopDestroy(player, pos);
 				} else if (packet.c() == EnumPlayerDigType.ABORT_DESTROY_BLOCK) {
-					env.getInteractManager().abortDestory(player);
+					env.getInteractManager().abortDestroy(player);
 				}
 
 				if (env.getType(pos).getBlock().getMaterial() != Material.AIR) {

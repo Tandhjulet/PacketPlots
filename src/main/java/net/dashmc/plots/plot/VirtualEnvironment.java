@@ -58,6 +58,7 @@ import net.minecraft.server.v1_8_R3.Material;
 import net.minecraft.server.v1_8_R3.MinecraftServer;
 import net.minecraft.server.v1_8_R3.Packet;
 import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
+import net.minecraft.server.v1_8_R3.PacketPlayOutBlockBreakAnimation;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_8_R3.TileEntity;
@@ -292,7 +293,14 @@ public class VirtualEnvironment implements IDataHolder {
 
 		VirtualChunk chunk = virtualChunks.get(Utils.getChunkCoordHash(pos));
 		boolean succeeded = chunk.setBlock(pos, blockData);
+		if (succeeded)
+			notify(pos);
+
 		return succeeded;
+	}
+
+	private void notify(BlockPosition pos) {
+		broadcastPacket(new VirtualBlockChangePacket(this, pos).getPacket());
 	}
 
 	public boolean isValidLocation(BlockPosition blockposition) {
@@ -496,7 +504,7 @@ public class VirtualEnvironment implements IDataHolder {
 
 			Debug.log("startDestroy called, is interact event cancelled? " + event.isCancelled());
 
-			if (event.isCancelled()) {
+			if (event.isCancelled() || !getOwnerUuid().equals(player.getUniqueID())) {
 				player.playerConnection
 						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
 				TileEntity tile = getTileEntity(pos);
@@ -520,11 +528,11 @@ public class VirtualEnvironment implements IDataHolder {
 				if (player.playerInteractManager.getGameMode() == EnumGamemode.SPECTATOR)
 					return;
 
-				if (player.cn()) {
+				if (!player.cn()) {
 					ItemStack item = player.bZ();
 					if (item == null)
 						return;
-					if (item.c(block))
+					if (!item.c(block))
 						return;
 				}
 			}
@@ -585,6 +593,8 @@ public class VirtualEnvironment implements IDataHolder {
 				Utils.setIsDestroying(player.playerInteractManager, true);
 				Utils.setDestroyPosition(player.playerInteractManager, pos);
 				Utils.setForce(player.playerInteractManager, (int) (f * 10f));
+
+				broadcastPacket(new PacketPlayOutBlockBreakAnimation(player.getId(), pos, (int) (f * 10f)));
 			}
 
 			return;
@@ -605,6 +615,7 @@ public class VirtualEnvironment implements IDataHolder {
 
 					if (f >= 0.7F) {
 						Utils.setIsDestroying(player.playerInteractManager, false);
+						broadcastPacket(new PacketPlayOutBlockBreakAnimation(player.getId(), pos, -1));
 						breakBlock(player, pos);
 					} else { // TODO:
 
@@ -617,9 +628,12 @@ public class VirtualEnvironment implements IDataHolder {
 		}
 
 		// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L231
-		public void abortDestory(EntityPlayer player) {
+		public void abortDestroy(EntityPlayer player) {
 			Debug.log("abort destroy");
 			Utils.setIsDestroying(player.playerInteractManager, false);
+
+			BlockPosition pos = Utils.getDestroyPosition(player.playerInteractManager);
+			broadcastPacket(new PacketPlayOutBlockBreakAnimation(player.getId(), pos, -1));
 			return;
 		}
 
