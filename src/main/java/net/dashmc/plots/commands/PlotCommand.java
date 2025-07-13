@@ -1,6 +1,6 @@
 package net.dashmc.plots.commands;
 
-import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import eu.okaeri.commands.annotation.Arg;
@@ -31,10 +31,10 @@ public class PlotCommand implements CommandService {
 		return RawResponse.of("Toggled plot virtualization {arg}!").with("arg", value.toLowerCase());
 	}
 
-	@Completion(arg = "name", value = "@allplayers")
 	@Executor(pattern = "visit *")
-	public BukkitResponse visit(@Context Player sender, @Arg String name) {
-		Player playertoVisit = Bukkit.getPlayerExact(name);
+	public BukkitResponse visit(@Context Player sender, @Arg OfflinePlayer player) {
+		Player playertoVisit = player.getPlayer();
+		String name = player.getName();
 		if (playertoVisit == null) {
 			return RawResponse.of("Kunne ikke finde en spiller ved navn {name}!")
 					.with("name", name);
