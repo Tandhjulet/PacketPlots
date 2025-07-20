@@ -9,10 +9,14 @@ import org.bukkit.World;
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.Comment;
 import lombok.Getter;
+import net.dashmc.plots.utils.CuboidRegion;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 
 @Getter
 public class PlotConfig extends OkaeriConfig {
+
+	@Comment("The virtualized region")
+	CuboidRegion region;
 
 	@Comment("Chunk coord pairs for the chunks to be virtualized")
 	HashSet<ChunkConfig> virtualChunks = new HashSet<>();

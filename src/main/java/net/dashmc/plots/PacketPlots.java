@@ -20,7 +20,8 @@ import eu.okaeri.validator.policy.NullPolicy;
 import lombok.Getter;
 import net.dashmc.plots.commands.PlotCommand;
 import net.dashmc.plots.config.PlotConfig;
-import net.dashmc.plots.config.serializers.ChunkCoordPairSerializer;
+import net.dashmc.plots.config.serializers.BlockPositionSerializer;
+import net.dashmc.plots.config.serializers.CuboidRegionSerializer;
 import net.dashmc.plots.listeners.ConnectionListener;
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.VirtualEnvironment;
@@ -41,7 +42,8 @@ public class PacketPlots extends JavaPlugin {
 		plotConfig = ConfigManager.create(PlotConfig.class, (conf) -> {
 			conf.withConfigurer(new YamlBukkitConfigurer(), new SerdesBukkit());
 			conf.withSerdesPack(reg -> {
-				reg.register(new ChunkCoordPairSerializer());
+				reg.register(new BlockPositionSerializer());
+				reg.register(new CuboidRegionSerializer());
 			});
 			conf.withBindFile(new File(this.getDataFolder(), "config.yml"));
 			conf.saveDefaults();
@@ -50,8 +52,6 @@ public class PacketPlots extends JavaPlugin {
 
 		ConnectionListener.register();
 		PacketInterceptor.register();
-
-		// this.getCommand("plot").setExecutor(new PlotCommand());
 
 		commands = CommandsBukkit.of(this);
 		// commands.resultHandler(new BukkitCommandsResultHandler());

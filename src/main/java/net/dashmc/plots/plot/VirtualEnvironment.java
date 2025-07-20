@@ -35,6 +35,7 @@ import net.dashmc.plots.events.VirtualBlockDamageEvent;
 import net.dashmc.plots.events.VirtualInteractEvent;
 import net.dashmc.plots.packets.extensions.VirtualBlockChangePacket;
 import net.dashmc.plots.player.VirtualPlayerInteractManager;
+import net.dashmc.plots.utils.CuboidRegion;
 import net.dashmc.plots.utils.Debug;
 import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
@@ -69,8 +70,9 @@ import net.minecraft.server.v1_8_R3.TileEntity;
  * player uuid (16 bytes - 2x long)
  * world uid (16 bytes - 2x long)
  * 
- * amount of virtual chunks (4 bytes - int)
- * array of VirtualChunk
+ * region pos1 (x,y,z 12 bytes - 3x int)
+ * region pos2 (x,y,z 12 bytes - 3x int)
+ * combined blockdata in sequence z => y => x (so to unpack, loop x => y => z)
  */
 
 public class VirtualEnvironment implements IDataHolder {
@@ -85,6 +87,7 @@ public class VirtualEnvironment implements IDataHolder {
 	private @Getter net.minecraft.server.v1_8_R3.World nmsWorld;
 	private @Getter UUID ownerUuid;
 	private @Getter InteractManager interactManager = new InteractManager();
+	private @Getter CuboidRegion region;
 
 	public static Collection<VirtualEnvironment> getActive() {
 		return virtualEnvironments.values();
@@ -129,12 +132,19 @@ public class VirtualEnvironment implements IDataHolder {
 		this.nmsWorld = ((CraftWorld) world).getHandle();
 		net.minecraft.server.v1_8_R3.World nmsWorld = ((CraftWorld) world).getHandle();
 
-		HashSet<ChunkConfig> chunks = PacketPlots.getPlotConfig().getVirtualChunks();
+		this.region = PacketPlots.getPlotConfig().getRegion();
 
-		for (ChunkConfig chunk : chunks) {
-			virtualChunks.put(chunk.coords.hashCode(),
-					new VirtualChunk(this, chunk.coords, nmsWorld, chunk.getSectionsAsMask()));
+		char sectionMask = region.getSectionMask();
+		for (ChunkCoordIntPair coord : region.getChunks()) {
+			VirtualChunk chunk = new VirtualChunk(this, coord, nmsWorld, sectionMask);
+			virtualChunks.put(coord.hashCode(), chunk);
 		}
+
+		// HashSet<ChunkConfig> chunks = PacketPlots.getPlotConfig().getVirtualChunks();
+		// for (ChunkConfig chunk : chunks) {
+		// virtualChunks.put(chunk.coords.hashCode(),
+		// new VirtualChunk(this, chunk.coords, nmsWorld, chunk.getSectionsAsMask()));
+		// }
 
 		save();
 		startVirtualization(nmsOwner);
@@ -381,29 +391,37 @@ public class VirtualEnvironment implements IDataHolder {
 		this.world = Bukkit.getWorld(new UUID(stream.readLong(), stream.readLong()));
 		net.minecraft.server.v1_8_R3.World nmsWorld = ((CraftWorld) world).getHandle();
 
+		BlockPosition pos1 = new BlockPosition(stream.readInt(), stream.readInt(), stream.readInt());
+		BlockPosition pos2 = new BlockPosition(stream.readInt(), stream.readInt(), stream.readInt());
+		this.region = new CuboidRegion(pos1, pos2);
+
 		int arraySize = stream.readInt();
 
-		Map<ChunkCoordIntPair, ChunkConfig> chunkCoordPairs = PacketPlots.getPlotConfig().getVirtualChunks().stream()
-				.collect(Collectors.toMap(e -> e.coords, e -> e));
+		// Map<ChunkCoordIntPair, ChunkConfig> chunkCoordPairs =
+		// PacketPlots.getPlotConfig().getVirtualChunks().stream()
+		// .collect(Collectors.toMap(e -> e.coords, e -> e));
 
-		// Read in the saved chunks. If any of them aren't specified as virtual in the
-		// config any more discard them:
-		for (int i = 0; i < arraySize; i++) {
-			VirtualChunk chunk = new VirtualChunk(this, ((CraftWorld) world).getHandle(), stream);
-			if (!chunkCoordPairs.containsKey(chunk.getCoordPair()))
-				continue;
+		// // Read in the saved chunks. If any of them aren't specified as virtual in
+		// the
+		// // config any more discard them:
+		// for (int i = 0; i < arraySize; i++) {
+		// VirtualChunk chunk = new VirtualChunk(this, ((CraftWorld) world).getHandle(),
+		// stream);
+		// if (!chunkCoordPairs.containsKey(chunk.getCoordPair()))
+		// continue;
 
-			char allowedSections = chunkCoordPairs.remove(chunk.getCoordPair()).getSectionsAsMask();
-			chunk.setAllowedSections(allowedSections);
+		// char allowedSections =
+		// chunkCoordPairs.remove(chunk.getCoordPair()).getSectionsAsMask();
+		// chunk.setAllowedSections(allowedSections);
 
-			virtualChunks.put(chunk.getCoordPair().hashCode(), chunk);
-		}
+		// virtualChunks.put(chunk.getCoordPair().hashCode(), chunk);
+		// }
 
-		// Fill the remaining spots, if any, with new virtual chunks
-		for (ChunkConfig chunk : chunkCoordPairs.values()) {
-			virtualChunks.put(chunk.coords.hashCode(),
-					new VirtualChunk(this, chunk.coords, nmsWorld, chunk.getSectionsAsMask()));
-		}
+		// // Fill the remaining spots, if any, with new virtual chunks
+		// for (ChunkConfig chunk : chunkCoordPairs.values()) {
+		// virtualChunks.put(chunk.coords.hashCode(),
+		// new VirtualChunk(this, chunk.coords, nmsWorld, chunk.getSectionsAsMask()));
+		// }
 
 		Debug.log("Loaded chunks from save file: " + virtualChunks.size());
 	}
