@@ -1,15 +1,10 @@
 package net.dashmc.plots.packets.interceptors;
 
-import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
-
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.packets.extensions.VirtualBlockChangePacket;
-import net.dashmc.plots.plot.VirtualChunk;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
-import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.BlockPosition;
-import net.minecraft.server.v1_8_R3.Chunk;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.Material;
 import net.minecraft.server.v1_8_R3.PacketPlayInBlockDig;
@@ -26,12 +21,10 @@ public class BlockDigPacketInterceptor extends PacketInterceptor<PacketPlayInBlo
 		EntityPlayer player = conn.getPlayer();
 
 		BlockPosition pos = packet.a();
-		Chunk chunk = ((CraftWorld) env.getWorld()).getHandle().getChunkAtWorldCoords(pos);
-
-		VirtualChunk virtualChunk = env.getVirtualChunks().get(Utils.getChunkCoordHash(chunk.locX, chunk.locZ));
-		if (virtualChunk == null)
+		if (!env.isValidLocation(pos))
 			return false;
-		else if (!env.getOwnerUuid().equals(player.getUniqueID())) {
+
+		if (!env.getOwnerUuid().equals(player.getUniqueID())) {
 			player.playerConnection
 					.sendPacket(new VirtualBlockChangePacket(env, pos).getPacket());
 			TileEntity tile = env.getTileEntity(pos);

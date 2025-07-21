@@ -6,11 +6,9 @@ import org.bukkit.util.NumberConversions;
 
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.packets.extensions.VirtualBlockChangePacket;
-import net.dashmc.plots.plot.VirtualChunk;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Debug;
-import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.EnumDirection;
@@ -30,9 +28,7 @@ public class BlockPlacementPacketInterceptor extends PacketInterceptor<PacketPla
 
 		BlockPosition pos = packet.a();
 
-		VirtualChunk virtualChunk = env.getVirtualChunks()
-				.get(Utils.getChunkCoordHash(pos.getX() >> 4, pos.getZ() >> 4));
-		if (virtualChunk == null)
+		if (!env.isValidLocation(pos))
 			return false;
 
 		if (player.dead)

@@ -4,6 +4,7 @@ import org.apache.logging.log4j.util.TriConsumer;
 import org.bukkit.Location;
 import lombok.Getter;
 import net.dashmc.plots.plot.VirtualChunk;
+import net.dashmc.plots.plot.VirtualChunk.Section;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 
@@ -79,9 +80,14 @@ public class CuboidRegion {
 	 * 
 	 * @param consumer Consumes x,y,z coordinate of location
 	 */
-	public void forEachInside(VirtualChunk chunk, TriConsumer<Integer, Integer, Integer> consumer) {
+	public void forEachInside(Section section, TriConsumer<Integer, Integer, Integer> consumer) {
+		VirtualChunk chunk = section.getVirtualChunk();
+
 		int chunkMinX = chunk.getCoordPair().x << 4;
 		int chunkMaxX = chunkMinX + 15;
+
+		int sectionMinY = section.getYPos() << 4;
+		int sectionMaxY = sectionMinY + 15;
 
 		int chunkMinZ = chunk.getCoordPair().z << 4;
 		int chunkMaxZ = chunkMinZ + 15;
@@ -89,8 +95,8 @@ public class CuboidRegion {
 		int minX = Math.max(getMinX(), chunkMinX);
 		int maxX = Math.max(getMaxX(), chunkMaxX);
 
-		int minY = getMinY();
-		int maxY = getMaxY();
+		int minY = Math.max(getMinY(), sectionMinY);
+		int maxY = Math.max(getMaxY(), sectionMaxY);
 
 		int minZ = Math.max(getMinZ(), chunkMinZ);
 		int maxZ = Math.max(getMaxZ(), chunkMaxZ);
@@ -118,10 +124,14 @@ public class CuboidRegion {
 		}
 	}
 
+	public boolean includes(int x, int y, int z) {
+		return x >= minX && x <= maxX &&
+				y >= minY && y <= maxY &&
+				z >= minZ && z <= maxZ;
+	}
+
 	public boolean includes(BlockPosition pos) {
-		return pos.getX() >= minX && pos.getX() <= maxX &&
-				pos.getY() >= minY && pos.getY() <= maxY &&
-				pos.getZ() >= minZ && pos.getZ() <= maxZ;
+		return includes(pos.getX(), pos.getY(), pos.getZ());
 	}
 
 	public BlockPosition getMax() {

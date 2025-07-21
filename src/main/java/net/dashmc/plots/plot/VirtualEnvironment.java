@@ -10,10 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.World;
@@ -27,7 +24,6 @@ import com.google.common.collect.Lists;
 
 import lombok.Getter;
 import net.dashmc.plots.PacketPlots;
-import net.dashmc.plots.config.PlotConfig.ChunkConfig;
 import net.dashmc.plots.data.IDataHolder;
 import net.dashmc.plots.events.VirtualBlockBreakEvent;
 import net.dashmc.plots.events.VirtualBlockCanBuildEvent;
@@ -318,17 +314,16 @@ public class VirtualEnvironment implements IDataHolder {
 		broadcastPacket(new VirtualBlockChangePacket(this, pos).getPacket());
 	}
 
-	public boolean isValidLocation(BlockPosition blockposition) {
-		if (!(blockposition.getX() >= -30000000 && blockposition.getZ() >= -30000000 && blockposition.getX() < 30000000
-				&& blockposition.getZ() < 30000000 && blockposition.getY() >= 0 && blockposition.getY() < 256))
+	public boolean isValidLocation(BlockPosition pos) {
+		return isValidLocation(pos.getX(), pos.getY(), pos.getZ());
+	}
+
+	public boolean isValidLocation(int x, int y, int z) {
+		if (!(x >= -30000000 && z >= -30000000 && x < 30000000
+				&& z < 30000000 && y >= 0 && y < 256))
 			return false;
 
-		int hash = Utils.getChunkCoordHash(blockposition);
-		VirtualChunk chunk = virtualChunks.get(hash);
-		if (chunk == null)
-			return false;
-
-		return chunk.isSectionSet((byte) (blockposition.getY() >> 4));
+		return region.includes(x, y, z);
 	}
 
 	// public boolean addEntity(Entity entity) {
@@ -389,13 +384,16 @@ public class VirtualEnvironment implements IDataHolder {
 	public void deserialize(DataInputStream stream) throws IOException {
 		this.ownerUuid = new UUID(stream.readLong(), stream.readLong());
 		this.world = Bukkit.getWorld(new UUID(stream.readLong(), stream.readLong()));
-		net.minecraft.server.v1_8_R3.World nmsWorld = ((CraftWorld) world).getHandle();
 
 		BlockPosition pos1 = new BlockPosition(stream.readInt(), stream.readInt(), stream.readInt());
 		BlockPosition pos2 = new BlockPosition(stream.readInt(), stream.readInt(), stream.readInt());
 		this.region = new CuboidRegion(pos1, pos2);
 
-		int arraySize = stream.readInt();
+		int chunks = stream.readInt();
+		for (int i = 0; i < chunks; i++) {
+			VirtualChunk chunk = new VirtualChunk(this, stream);
+			virtualChunks.put(chunk.getCoordPair().hashCode(), chunk);
+		}
 
 		// Map<ChunkCoordIntPair, ChunkConfig> chunkCoordPairs =
 		// PacketPlots.getPlotConfig().getVirtualChunks().stream()
@@ -441,6 +439,16 @@ public class VirtualEnvironment implements IDataHolder {
 
 		stream.writeLong(world.getUID().getMostSignificantBits());
 		stream.writeLong(world.getUID().getLeastSignificantBits());
+
+		BlockPosition pos1 = region.getPos1();
+		stream.writeInt(pos1.getX());
+		stream.writeInt(pos1.getY());
+		stream.writeInt(pos1.getZ());
+
+		BlockPosition pos2 = region.getPos2();
+		stream.writeInt(pos2.getX());
+		stream.writeInt(pos2.getY());
+		stream.writeInt(pos2.getZ());
 
 		stream.writeInt(virtualChunks.size());
 

@@ -37,9 +37,7 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 			return true;
 		}
 
-		VirtualChunk virtualChunk = connection.getEnvironment().getVirtualChunks()
-				.get(Utils.getChunkCoordHash(((int) x) >> 4, ((int) z) >> 4));
-		if (virtualChunk == null)
+		if (!connection.getEnvironment().isValidLocation((int) x, (int) y, (int) z))
 			return false;
 		else if (!connection.isMoved()) {
 			connection.setMoved(true);

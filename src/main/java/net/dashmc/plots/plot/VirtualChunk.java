@@ -18,6 +18,7 @@ import com.google.common.collect.Lists;
 import lombok.Getter;
 import net.dashmc.plots.data.IDataHolder;
 import net.dashmc.plots.nbt.NBTHelper;
+import net.dashmc.plots.utils.CuboidRegion;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockContainer;
@@ -85,9 +86,9 @@ public class VirtualChunk implements IDataHolder {
 		}
 	}
 
-	public VirtualChunk(VirtualEnvironment environment, World world, DataInputStream stream) throws IOException {
+	public VirtualChunk(VirtualEnvironment environment, DataInputStream stream) throws IOException {
 		this.environment = environment;
-		this.world = world;
+		this.world = environment.getNmsWorld();
 		deserialize(stream);
 	}
 
@@ -200,17 +201,18 @@ public class VirtualChunk implements IDataHolder {
 
 	@Override
 	public void deserialize(DataInputStream stream) throws IOException {
+		VirtualEnvironment environment = getEnvironment();
 		this.coordPair = new ChunkCoordIntPair(stream.readInt(), stream.readInt());
 
 		Debug.log("Deserializing chunk @ " + coordPair.x + " , " + coordPair.z);
 		this.chunk = world.getChunkAt(coordPair.x, coordPair.z);
 
-		this.sectionMask = stream.readChar();
-		for (int i = 0; i < 16; i++) {
+		this.sectionMask = environment.getRegion().getSectionMask();
+		for (byte i = 0; i < 16; i++) {
 			if ((sectionMask & (1 << i)) == 0)
 				continue;
 
-			sections[i] = new Section(stream);
+			sections[i] = new Section(stream, i);
 		}
 
 		int tiles = stream.readInt();
@@ -231,7 +233,6 @@ public class VirtualChunk implements IDataHolder {
 		stream.writeInt(coordPair.z);
 		Debug.log("Serializing chunk @ " + coordPair.x + " , " + coordPair.z);
 
-		stream.writeChar(sectionMask);
 		for (Section virtualChunkSection : sections) {
 			if (virtualChunkSection == null)
 				continue;
@@ -407,27 +408,42 @@ public class VirtualChunk implements IDataHolder {
 			}
 		}
 
-		public Section(DataInputStream stream) throws IOException {
+		public Section(DataInputStream stream, byte chunkY) throws IOException {
+			this.yPos = chunkY;
 			deserialize(stream);
 		}
 
-		@Override
-		public void deserialize(DataInputStream stream) throws IOException {
-			this.yPos = stream.readByte();
-			this.nonEmptyBlockCount = stream.readChar();
-			for (short i = 0; i < blockIds.length; i++) {
-				char blockId = stream.readChar();
-				blockIds[i] = blockId;
-			}
+		public VirtualChunk getVirtualChunk() {
+			return VirtualChunk.this;
 		}
 
+		// TODO: if this becomes a performance issue, use a plain loop instead
+		@Override
+		public void deserialize(DataInputStream stream) throws IOException {
+			this.nonEmptyBlockCount = stream.readChar();
+			CuboidRegion region = getEnvironment().getRegion();
+			region.forEachInside(this, (x, y, z) -> {
+				try {
+					blockIds[y << 8 | z << 4 | x] = stream.readChar();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			});
+		}
+
+		// TODO: if this becomes a performance issue, use a plain loop instead
 		@Override
 		public void serialize(DataOutputStream stream) throws IOException {
-			stream.writeByte(yPos);
-			stream.writeChar(nonEmptyBlockCount);
-			for (char i = 0; i < blockIds.length; i++) {
-				stream.writeChar(blockIds[i]);
-			}
+			stream.writeChar(this.nonEmptyBlockCount);
+
+			CuboidRegion region = getEnvironment().getRegion();
+			region.forEachInside(this, (x, y, z) -> {
+				try {
+					stream.writeChar(blockIds[y << 8 | z << 4 | x]);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			});
 		}
 
 		public IBlockData getType(byte x, byte y, byte z) {
