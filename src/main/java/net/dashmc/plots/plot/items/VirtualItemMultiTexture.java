@@ -13,9 +13,9 @@ public class VirtualItemMultiTexture extends VirtualItem<ItemMultiTexture> {
 
 	@Override
 	public boolean interactWith(ItemStack item, EntityHuman player, VirtualEnvironment environment, BlockPosition pos,
-			EnumDirection direction, float cX, float cY, float cZ) {
+			EnumDirection direction, float cX, float cY, float cZ, boolean isBorderPlace) {
 		return VirtualItem.getVirtualItems().get(ItemBlock.class).interactWith(item, player, environment, pos,
-				direction, cX, cY, cZ);
+				direction, cX, cY, cZ, isBorderPlace);
 	}
 
 	@Override

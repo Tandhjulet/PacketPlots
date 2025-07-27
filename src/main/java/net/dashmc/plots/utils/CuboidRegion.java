@@ -57,13 +57,13 @@ public class CuboidRegion {
 
 		ChunkCoordIntPair[] chunks = new ChunkCoordIntPair[totalChunks];
 
-		for (int x = 0, i = 0; x < chunkWidth; x++, i++) {
-			for (int z = 0; z < chunkDepth; z++) {
+		for (int x = minX >> 4, i = 0; x <= maxX >> 4; x++, i++) {
+			for (int z = minZ >> 4; z <= maxZ >> 4; z++) {
 				chunks[i] = new ChunkCoordIntPair(x, z);
 			}
 		}
 
-		return null;
+		return chunks;
 	}
 
 	@Override
@@ -86,7 +86,7 @@ public class CuboidRegion {
 		int chunkMinX = chunk.getCoordPair().x << 4;
 		int chunkMaxX = chunkMinX + 15;
 
-		int sectionMinY = section.getYPos() << 4;
+		int sectionMinY = section.getChunkY() << 4;
 		int sectionMaxY = sectionMinY + 15;
 
 		int chunkMinZ = chunk.getCoordPair().z << 4;
@@ -100,13 +100,8 @@ public class CuboidRegion {
 
 		int minZ = Math.max(getMinZ(), chunkMinZ);
 		int maxZ = Math.max(getMaxZ(), chunkMaxZ);
-		for (int x = minX; x <= maxX; x++) {
-			for (int y = minY; y <= maxY; y++) {
-				for (int z = minZ; z <= maxZ; z++) {
-					consumer.accept(x, y, z);
-				}
-			}
-		}
+
+		forEach(minX, minY, minZ, maxX, maxY, maxZ, consumer);
 	}
 
 	/**
@@ -115,6 +110,11 @@ public class CuboidRegion {
 	 * @param consumer Consumes x,y,z coordinate of location
 	 */
 	public void forEach(TriConsumer<Integer, Integer, Integer> consumer) {
+		forEach(minX, minY, minZ, maxX, maxY, maxZ, consumer);
+	}
+
+	private void forEach(int minX, int minY, int minZ, int maxX, int maxY, int maxZ,
+			TriConsumer<Integer, Integer, Integer> consumer) {
 		for (int x = minX; x <= maxX; x++) {
 			for (int y = minY; y <= maxY; y++) {
 				for (int z = minZ; z <= maxZ; z++) {

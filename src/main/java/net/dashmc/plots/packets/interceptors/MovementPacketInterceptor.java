@@ -9,9 +9,7 @@ import org.bukkit.util.NumberConversions;
 
 import net.dashmc.plots.events.VirtualPlayerMoveEvent;
 import net.dashmc.plots.packets.PacketInterceptor;
-import net.dashmc.plots.plot.VirtualChunk;
 import net.dashmc.plots.plot.VirtualConnection;
-import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.PacketPlayInFlying;
 import net.minecraft.server.v1_8_R3.PacketPlayOutPosition;

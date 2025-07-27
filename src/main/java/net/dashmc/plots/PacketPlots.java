@@ -2,6 +2,7 @@ package net.dashmc.plots;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -25,6 +26,7 @@ import net.dashmc.plots.config.serializers.CuboidRegionSerializer;
 import net.dashmc.plots.listeners.ConnectionListener;
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.utils.Debug;
 
 public class PacketPlots extends JavaPlugin {
 
@@ -49,6 +51,8 @@ public class PacketPlots extends JavaPlugin {
 			conf.saveDefaults();
 			conf.load(true);
 		});
+
+		Debug.log("Found config file... virtualizing region " + plotConfig.getRegion() + " with chunks " + Arrays.toString(plotConfig.getRegion().getChunks()));
 
 		ConnectionListener.register();
 		PacketInterceptor.register();

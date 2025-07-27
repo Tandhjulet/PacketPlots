@@ -1,7 +1,6 @@
 package net.dashmc.plots.config;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -17,9 +16,6 @@ public class PlotConfig extends OkaeriConfig {
 
 	@Comment("The virtualized region")
 	CuboidRegion region;
-
-	@Comment("Chunk coord pairs for the chunks to be virtualized")
-	HashSet<ChunkConfig> virtualChunks = new HashSet<>();
 
 	public class ChunkConfig extends OkaeriConfig {
 		public ChunkCoordIntPair coords;

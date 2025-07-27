@@ -98,7 +98,7 @@ public class VirtualEnvironment implements IDataHolder {
 	}
 
 	public VirtualEnvironment(Player player) throws IOException {
-		if (player == null || !player.isOnline())
+		if (!player.isOnline())
 			throw new IOException(
 					"Tried initialization of VirtualEnvironment for offline player: " + player.getUniqueId());
 
@@ -121,18 +121,18 @@ public class VirtualEnvironment implements IDataHolder {
 			return;
 		}
 
+		Debug.log("No save file could be found for " + player.getName());
+
 		virtualEnvironments.put(player, this);
 
 		this.ownerUuid = player.getUniqueId();
 		this.world = PacketPlots.getPlotConfig().getWorld();
 		this.nmsWorld = ((CraftWorld) world).getHandle();
-		net.minecraft.server.v1_8_R3.World nmsWorld = ((CraftWorld) world).getHandle();
 
 		this.region = PacketPlots.getPlotConfig().getRegion();
 
-		char sectionMask = region.getSectionMask();
 		for (ChunkCoordIntPair coord : region.getChunks()) {
-			VirtualChunk chunk = new VirtualChunk(this, coord, nmsWorld, sectionMask);
+			VirtualChunk chunk = new VirtualChunk(this, coord);
 			virtualChunks.put(coord.hashCode(), chunk);
 		}
 
@@ -326,52 +326,6 @@ public class VirtualEnvironment implements IDataHolder {
 		return region.includes(x, y, z);
 	}
 
-	// public boolean addEntity(Entity entity) {
-	// if (entity == null)
-	// return false;
-	// int x = MathHelper.floor(entity.locX / 16D);
-	// int z = MathHelper.floor(entity.locZ / 16D);
-
-	// Cancellable event = null;
-	// if ((entity instanceof EntityLiving || entity.getBukkitEntity() instanceof
-	// Projectile
-	// || entity instanceof EntityExperienceOrb) && !(entity instanceof
-	// EntityPlayer)) {
-	// entity.dead = true;
-	// return false;
-	// } else if (entity instanceof EntityItem) {
-	// Item ent = (Item) entity.getBukkitEntity();
-
-	// VirtualItemSpawnEvent ev = new VirtualItemSpawnEvent(ent.getLocation(), ent,
-	// this);
-	// Bukkit.getPluginManager().callEvent(ev);
-	// event = ev;
-	// }
-
-	// if (event != null && (event.isCancelled() || entity.dead)) {
-	// entity.dead = true;
-	// return false;
-	// }
-
-	// entities.put(entity.getId(), entity);
-	// return true;
-	// }
-
-	// public void addEntity(BlockPosition blockposition, ItemStack itemstack) {
-	// float f = 0.5F;
-	// double d0 = (double)(nmsWorld.random.nextFloat() * f) + (double)(1.0F - f) *
-	// 0.5;
-	// double d1 = (double)(nmsWorld.random.nextFloat() * f) + (double)(1.0F - f) *
-	// 0.5;
-	// double d2 = (double)(nmsWorld.random.nextFloat() * f) + (double)(1.0F - f) *
-	// 0.5;
-	// EntityItem entityitem = new EntityItem(nmsWorld, (double)blockposition.getX()
-	// + d0, (double)blockposition.getY() + d1, (double)blockposition.getZ() + d2,
-	// itemstack);
-	// entityitem.p();
-	// world.addEntity(entityitem);
-	// }
-
 	public Player getOwner() {
 		return Bukkit.getPlayer(ownerUuid);
 	}
@@ -384,6 +338,7 @@ public class VirtualEnvironment implements IDataHolder {
 	public void deserialize(DataInputStream stream) throws IOException {
 		this.ownerUuid = new UUID(stream.readLong(), stream.readLong());
 		this.world = Bukkit.getWorld(new UUID(stream.readLong(), stream.readLong()));
+		this.nmsWorld = ((CraftWorld) world).getHandle();
 
 		BlockPosition pos1 = new BlockPosition(stream.readInt(), stream.readInt(), stream.readInt());
 		BlockPosition pos2 = new BlockPosition(stream.readInt(), stream.readInt(), stream.readInt());
@@ -394,32 +349,6 @@ public class VirtualEnvironment implements IDataHolder {
 			VirtualChunk chunk = new VirtualChunk(this, stream);
 			virtualChunks.put(chunk.getCoordPair().hashCode(), chunk);
 		}
-
-		// Map<ChunkCoordIntPair, ChunkConfig> chunkCoordPairs =
-		// PacketPlots.getPlotConfig().getVirtualChunks().stream()
-		// .collect(Collectors.toMap(e -> e.coords, e -> e));
-
-		// // Read in the saved chunks. If any of them aren't specified as virtual in
-		// the
-		// // config any more discard them:
-		// for (int i = 0; i < arraySize; i++) {
-		// VirtualChunk chunk = new VirtualChunk(this, ((CraftWorld) world).getHandle(),
-		// stream);
-		// if (!chunkCoordPairs.containsKey(chunk.getCoordPair()))
-		// continue;
-
-		// char allowedSections =
-		// chunkCoordPairs.remove(chunk.getCoordPair()).getSectionsAsMask();
-		// chunk.setAllowedSections(allowedSections);
-
-		// virtualChunks.put(chunk.getCoordPair().hashCode(), chunk);
-		// }
-
-		// // Fill the remaining spots, if any, with new virtual chunks
-		// for (ChunkConfig chunk : chunkCoordPairs.values()) {
-		// virtualChunks.put(chunk.coords.hashCode(),
-		// new VirtualChunk(this, chunk.coords, nmsWorld, chunk.getSectionsAsMask()));
-		// }
 
 		Debug.log("Loaded chunks from save file: " + virtualChunks.size());
 	}
@@ -460,11 +389,11 @@ public class VirtualEnvironment implements IDataHolder {
 
 	public class InteractManager {
 		public boolean interact(EntityHuman human, VirtualEnvironment env, ItemStack item, BlockPosition pos,
-				EnumDirection dir, float cX, float cY, float cZ) {
+				EnumDirection dir, float cX, float cY, float cZ, boolean isBorderPlace) {
 			if (!env.getOwnerUuid().equals(human.getUniqueID()))
 				return false;
 
-			IBlockData blockData = env.getType(pos);
+			IBlockData blockData = isBorderPlace ? nmsWorld.getType(pos) : env.getType(pos);
 			boolean result = false;
 
 			Debug.log("Interact position: " + pos.toString() + " (dir " + dir.toString() + ")");
@@ -505,7 +434,7 @@ public class VirtualEnvironment implements IDataHolder {
 					result = VirtualBlock.interact(env, pos, blockData, human, dir, cX, cY, cZ);
 				}
 
-				Debug.log("Item is not null: " + (item != null));
+				Debug.log("Item is: " + item);
 				Debug.log("Result is: " + result);
 
 				if (item != null && !result) {
@@ -514,7 +443,7 @@ public class VirtualEnvironment implements IDataHolder {
 
 					Debug.log("Placing item " + item.getItem().getName() + " (" + item.getItem().getClass() + ")");
 
-					result = VirtualItem.placeItem(item, human, env, pos, dir, cX, cY, cZ);
+					result = VirtualItem.placeItem(item, human, env, pos, dir, cX, cY, cZ, isBorderPlace);
 
 					if (gameMode == GameMode.CREATIVE) {
 						item.setData(data);

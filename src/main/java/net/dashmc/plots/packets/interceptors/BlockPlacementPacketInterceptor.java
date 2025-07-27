@@ -14,6 +14,7 @@ import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.EnumDirection;
 import net.minecraft.server.v1_8_R3.ItemStack;
 import net.minecraft.server.v1_8_R3.PacketPlayInBlockPlace;
+import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutSetSlot;
 import net.minecraft.server.v1_8_R3.Slot;
 
@@ -28,7 +29,9 @@ public class BlockPlacementPacketInterceptor extends PacketInterceptor<PacketPla
 
 		BlockPosition pos = packet.a();
 
-		if (!env.isValidLocation(pos))
+		EnumDirection dir = EnumDirection.fromType1(packet.getFace());
+		boolean isBorderPlace = !env.isValidLocation(pos) && env.isValidLocation(pos.shift(dir));
+		if (!env.isValidLocation(pos) && !isBorderPlace)
 			return false;
 
 		if (player.dead)
@@ -37,7 +40,6 @@ public class BlockPlacementPacketInterceptor extends PacketInterceptor<PacketPla
 		boolean always = false;
 		ItemStack inHand = player.inventory.getItemInHand();
 		boolean flag = false;
-		EnumDirection dir = EnumDirection.fromType1(packet.getFace());
 
 		player.resetIdleTimer();
 		if (packet.getFace() == 255) {
@@ -63,14 +65,18 @@ public class BlockPlacementPacketInterceptor extends PacketInterceptor<PacketPla
 
 			if (player.e((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D) < 64D) {
 				always = env.getInteractManager().interact(player, env, inHand, pos, dir, packet.d(),
-						packet.e(), packet.f());
+						packet.e(), packet.f(), isBorderPlace);
 			}
 
 			flag = true;
 		}
 
 		if (flag) {
-			player.playerConnection.sendPacket(new VirtualBlockChangePacket(env, pos).getPacket());
+			if (isBorderPlace) {
+				player.playerConnection.sendPacket(new PacketPlayOutBlockChange(env.getNmsWorld(), pos));
+			} else {
+				player.playerConnection.sendPacket(new VirtualBlockChangePacket(env, pos).getPacket());
+			}
 			player.playerConnection.sendPacket(new VirtualBlockChangePacket(env, pos.shift(dir)).getPacket());
 		}
 

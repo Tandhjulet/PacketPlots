@@ -5,13 +5,13 @@ import java.util.HashSet;
 import java.util.LinkedList;
 
 import net.dashmc.plots.PacketPlots;
-import net.dashmc.plots.config.PlotConfig.ChunkConfig;
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.VirtualChunk;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
+import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunkBulk;
 
 // https://minecraft.wiki/w/Protocol?oldid=2772100#Map_Chunk_Bulk
@@ -68,10 +68,10 @@ public class MapChunkBulkPacketInterceptor extends PacketInterceptor<PacketPlayO
 	}
 
 	static {
-		HashSet<ChunkConfig> coordIntPairs = PacketPlots.getPlotConfig().getVirtualChunks();
-		coordIntPairs.forEach((pair) -> {
-			coordPairs.add(pair.coords.hashCode());
-		});
+		ChunkCoordIntPair[] pairs = PacketPlots.getPlotConfig().getRegion().getChunks();
+		for (ChunkCoordIntPair pair : pairs) {
+			coordPairs.add(pair.hashCode());
+		}
 
 		try {
 			xCoordField = PacketPlayOutMapChunkBulk.class.getDeclaredField("a");

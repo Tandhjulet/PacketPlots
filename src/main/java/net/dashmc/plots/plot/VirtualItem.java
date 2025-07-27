@@ -30,19 +30,20 @@ public abstract class VirtualItem<T extends Item> {
 
 	/**
 	 * 
-	 * @param item        the held item
-	 * @param player      the player that tried interacting
-	 * @param environment the environment in which the player tried interacting
-	 * @param pos         the position at which the user tried interacting
-	 * @param direction   the direction of the block
-	 * @param cX          the position of the crosshair on the block
+	 * @param item          the held item
+	 * @param player        the player that tried interacting
+	 * @param environment   the environment in which the player tried interacting
+	 * @param pos           the position at which the user tried interacting
+	 * @param direction     the direction of the block
+	 * @param cX            the position of the crosshair on the block
 	 * @param cY
 	 * @param cZ
+	 * @param isBorderPlace
 	 * @return
 	 */
 	public abstract boolean interactWith(ItemStack item, EntityHuman player, VirtualEnvironment environment,
 			BlockPosition pos,
-			EnumDirection direction, float cX, float cY, float cZ);
+			EnumDirection direction, float cX, float cY, float cZ, boolean isBorderPlace);
 
 	public abstract Class<T> getClazz();
 
@@ -66,7 +67,8 @@ public abstract class VirtualItem<T extends Item> {
 	}
 
 	public static final <T extends Item> boolean placeItem(ItemStack itemStack, EntityHuman entityhuman,
-			VirtualEnvironment env, BlockPosition clicked, EnumDirection dir, float cX, float cY, float cZ) {
+			VirtualEnvironment env, BlockPosition clicked, EnumDirection dir, float cX, float cY, float cZ,
+			boolean isBorderPlace) {
 		CraftHumanEntity player = entityhuman.getBukkitEntity();
 
 		return getAndRun(itemStack.getItem(), (BiFunction<VirtualItem<T>, T, Boolean>) (virtualItem, actualItem) -> {
@@ -79,7 +81,8 @@ public abstract class VirtualItem<T extends Item> {
 			Location bukkitPlacedAt = Utils.convertPosToLoc(env.getWorld(), clicked);
 
 			IBlockData prevBlockData = env.getType(placedAt);
-			boolean flag = virtualItem.interactWith(itemStack, entityhuman, env, clicked, dir, cX, cY, cZ);
+			boolean flag = virtualItem.interactWith(itemStack, entityhuman, env, clicked, dir, cX, cY, cZ,
+					isBorderPlace);
 			Debug.log("Interact with flag: " + flag);
 
 			int newData = itemStack.getData();

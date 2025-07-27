@@ -6,6 +6,7 @@ import net.dashmc.plots.plot.VirtualItem;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
+import net.minecraft.server.v1_8_R3.Blocks;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EnumDirection;
 import net.minecraft.server.v1_8_R3.IBlockData;
@@ -18,12 +19,15 @@ public class VirtualItemBlock extends VirtualItem<ItemBlock> {
 
 	@Override
 	public boolean interactWith(ItemStack item, EntityHuman player, VirtualEnvironment environment, BlockPosition pos,
-			EnumDirection direction, float cX, float cY, float cZ) {
-		IBlockData ibd = environment.getType(pos);
+			EnumDirection direction, float cX, float cY, float cZ, boolean isBorderPlace) {
+		IBlockData ibd = isBorderPlace ? environment.getNmsWorld().getType(pos) : environment.getType(pos);
 		Block block = ibd.getBlock();
+		Debug.log("Is border place? " + isBorderPlace + " @ " + pos.toString() + " (" + block.toString() + ")");
 
 		if (!VirtualBlock.shouldRemainAt(block, environment, pos))
 			pos = pos.shift(direction);
+		else if(isBorderPlace)
+			return false;
 
 		Block toPlace = ((ItemBlock) item.getItem()).d();
 		Debug.log(

@@ -12,7 +12,6 @@ import java.util.Map;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.bukkit.Bukkit;
-
 import com.google.common.collect.Lists;
 
 import lombok.Getter;
@@ -26,6 +25,7 @@ import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Blocks;
 import net.minecraft.server.v1_8_R3.Chunk;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
+import net.minecraft.server.v1_8_R3.ChunkProviderServer;
 import net.minecraft.server.v1_8_R3.ChunkSection;
 import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.IContainer;
@@ -61,20 +61,16 @@ public class VirtualChunk implements IDataHolder {
 	private Section[] sections = new Section[16];
 	private Map<BlockPosition, TileEntity> tileEntities = new HashMap<>();
 	private char sectionMask = 0;
-	private char allowedSections;
 
-	public VirtualChunk(VirtualEnvironment environment, ChunkCoordIntPair coordPair, World world,
-			char allowedSections) {
+	public VirtualChunk(VirtualEnvironment environment, ChunkCoordIntPair coordPair) {
 		this.environment = environment;
 		this.coordPair = coordPair;
-		this.world = world;
+		this.world = environment.getNmsWorld();
 		this.chunk = world.getChunkAt(coordPair.x, coordPair.z);
-		this.allowedSections = allowedSections;
-
+		this.sectionMask = environment.getRegion().getSectionMask();
 		int i = 0;
 		for (ChunkSection section : chunk.getSections()) {
-			if (section != null && (allowedSections & 1 << i) != 0) {
-				sectionMask |= 1 << i;
+			if (section != null && (sectionMask & 1 << i) != 0) {
 				sections[i] = new Section(section);
 			}
 
@@ -90,20 +86,6 @@ public class VirtualChunk implements IDataHolder {
 		this.environment = environment;
 		this.world = environment.getNmsWorld();
 		deserialize(stream);
-	}
-
-	public void setAllowedSections(char allowedSections) {
-		this.allowedSections = allowedSections;
-		for (int i = 0; i < 16; i++) {
-			int mask = 1 << i;
-			// if there is a section which isnt allowed, remove it
-			if ((sectionMask & mask) != 0 && (allowedSections & mask) == 0) {
-				int removeMask = 0xffff ^ (1 << i);
-				sectionMask &= removeMask;
-
-				sections[i] = null;
-			}
-		}
 	}
 
 	public boolean isSectionSet(byte sectionIndex) {
@@ -123,15 +105,9 @@ public class VirtualChunk implements IDataHolder {
 		byte relZ = (byte) (pos.getZ() & 15);
 		byte yPos = (byte) (pos.getY() >> 4);
 
-		Debug.log("Checking if coordinate set is inside chunk: " + (pos.getX() >> 4) + " != " + coordPair.x + " || "
-				+ (pos.getZ() >> 4) + " != " + coordPair.z);
-		if (pos.getX() >> 4 != coordPair.x || pos.getZ() >> 4 != coordPair.z) {
+		if (!environment.isValidLocation(pos)) {
 			Bukkit.getLogger().warning(
 					"setBlock called on VirtualChunk even though the reference position was not in the virtualized chunk.");
-			return false;
-		} else if ((allowedSections & 1 << yPos) == 0) {
-			Bukkit.getLogger().warning(
-					"setBlock called on VirtualChunk even though the reference position was not in the virtualized section.");
 			return false;
 		}
 
@@ -202,12 +178,23 @@ public class VirtualChunk implements IDataHolder {
 	@Override
 	public void deserialize(DataInputStream stream) throws IOException {
 		VirtualEnvironment environment = getEnvironment();
+		this.world = environment.getNmsWorld();
+
 		this.coordPair = new ChunkCoordIntPair(stream.readInt(), stream.readInt());
 
 		Debug.log("Deserializing chunk @ " + coordPair.x + " , " + coordPair.z);
-		this.chunk = world.getChunkAt(coordPair.x, coordPair.z);
+
+		ChunkProviderServer cps = (ChunkProviderServer) world.N();
+		if (cps.isChunkLoaded(coordPair.x, coordPair.z)) {
+			this.chunk = world.getChunkAt(coordPair.x, coordPair.z);
+		} else {
+			Debug.log("Chunk is not loaded! Forcing load...");
+			this.chunk = cps.getChunkAt(coordPair.x, coordPair.z);
+		}
 
 		this.sectionMask = environment.getRegion().getSectionMask();
+		Debug.log("Section mask for the chunk: " + Integer.toBinaryString(sectionMask));
+		Debug.log("Sections for chunk: " + Arrays.toString(chunk.getSections()));
 		for (byte i = 0; i < 16; i++) {
 			if ((sectionMask & (1 << i)) == 0)
 				continue;
@@ -217,7 +204,7 @@ public class VirtualChunk implements IDataHolder {
 
 		int tiles = stream.readInt();
 		for (int i = 0; i < tiles; i++) {
-			NBTTagCompound compound = NBTHelper.loadPayload(stream, allowedSections, new NBTReadLimiter(2097152L));
+			NBTTagCompound compound = NBTHelper.loadPayload(stream, sectionMask, new NBTReadLimiter(2097152L));
 			TileEntity tile = TileEntity.c(compound);
 
 			Debug.log("Loading tile with NBT " + compound.toString());
@@ -284,7 +271,7 @@ public class VirtualChunk implements IDataHolder {
 
 		int j;
 		for (j = 0; j < sections.length; j++) {
-			if ((allowedSections & 1 << j) != 0) {
+			if ((sectionMask & 1 << j) != 0) {
 				Section section = sections[j];
 				if (section != null && !section.isEmpty() && (mask & 1 << j) != 0) {
 					chunkMap.b |= 1 << j;
@@ -394,13 +381,13 @@ public class VirtualChunk implements IDataHolder {
 	 * - blockId (2 bytes)
 	 */
 	public class Section implements IDataHolder {
-		private @Getter byte yPos;
+		private @Getter byte chunkY;
 		private char nonEmptyBlockCount;
 		private @Getter char[] blockIds = new char[4096];
 
 		public Section(ChunkSection section) {
 			try {
-				yPos = (byte) (section.getYPosition() >> 4);
+				chunkY = (byte) (section.getYPosition() >> 4);
 				blockIds = section.getIdArray().clone();
 				nonEmptyBlockCount = (char) nonEmptyBlockCountField.getInt(section);
 			} catch (IllegalArgumentException | IllegalAccessException e) {
@@ -409,7 +396,7 @@ public class VirtualChunk implements IDataHolder {
 		}
 
 		public Section(DataInputStream stream, byte chunkY) throws IOException {
-			this.yPos = chunkY;
+			this.chunkY = chunkY;
 			deserialize(stream);
 		}
 
@@ -417,21 +404,23 @@ public class VirtualChunk implements IDataHolder {
 			return VirtualChunk.this;
 		}
 
-		// TODO: if this becomes a performance issue, use a plain loop instead
 		@Override
 		public void deserialize(DataInputStream stream) throws IOException {
 			this.nonEmptyBlockCount = stream.readChar();
 			CuboidRegion region = getEnvironment().getRegion();
+
+			ChunkSection section = getChunk().getSections()[chunkY];
+			this.blockIds = section.getIdArray().clone();
+
 			region.forEachInside(this, (x, y, z) -> {
 				try {
-					blockIds[y << 8 | z << 4 | x] = stream.readChar();
+					blockIds[(y & 0xF) << 8 | (z & 0xF) << 4 | (x & 0xF)] = stream.readChar();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			});
 		}
 
-		// TODO: if this becomes a performance issue, use a plain loop instead
 		@Override
 		public void serialize(DataOutputStream stream) throws IOException {
 			stream.writeChar(this.nonEmptyBlockCount);
@@ -439,7 +428,7 @@ public class VirtualChunk implements IDataHolder {
 			CuboidRegion region = getEnvironment().getRegion();
 			region.forEachInside(this, (x, y, z) -> {
 				try {
-					stream.writeChar(blockIds[y << 8 | z << 4 | x]);
+					stream.writeChar(blockIds[(y & 0xF) << 8 | (z & 0xF) << 4 | (x & 0xF)]);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
