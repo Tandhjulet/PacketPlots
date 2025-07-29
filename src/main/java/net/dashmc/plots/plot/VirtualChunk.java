@@ -6,17 +6,20 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.bukkit.Bukkit;
-import com.google.common.collect.Lists;
+import org.bukkit.util.BlockVector;
 
 import lombok.Getter;
 import net.dashmc.plots.data.IDataHolder;
 import net.dashmc.plots.nbt.NBTHelper;
+import net.dashmc.plots.pipeline.RenderPipeline;
+import net.dashmc.plots.pipeline.RenderPipelineFactory;
+import net.dashmc.plots.pipeline.transformers.BackdropAdderTransformer;
+import net.dashmc.plots.pipeline.transformers.BackdropRemoverTransformer;
+import net.dashmc.plots.pipeline.transformers.RelativePositionTransformer;
 import net.dashmc.plots.utils.CuboidRegion;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
@@ -27,6 +30,7 @@ import net.minecraft.server.v1_8_R3.Chunk;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.ChunkProviderServer;
 import net.minecraft.server.v1_8_R3.ChunkSection;
+import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.IContainer;
 import net.minecraft.server.v1_8_R3.NBTReadLimiter;
@@ -58,9 +62,9 @@ public class VirtualChunk implements IDataHolder {
 	private Chunk chunk;
 	private @Getter VirtualEnvironment environment;
 	private World world;
-	private Section[] sections = new Section[16];
+	private @Getter Section[] sections = new Section[16];
 	private Map<BlockPosition, TileEntity> tileEntities = new HashMap<>();
-	private char sectionMask = 0;
+	private @Getter char sectionMask = 0;
 
 	public VirtualChunk(VirtualEnvironment environment, ChunkCoordIntPair coordPair) {
 		this.environment = environment;
@@ -250,76 +254,34 @@ public class VirtualChunk implements IDataHolder {
 		return chunk.getCoordPair().equals(getCoordPair());
 	}
 
-	public PacketPlayOutMapChunk getPacket(int mask, boolean isOverworld, boolean includeBiome) {
-		ChunkMap chunkMap = getChunkMap(mask, isOverworld, includeBiome);
+	public ChunkMap present(int chunkX, int chunkY, BlockVector offset) {
+		RenderPipeline pipeline = new RenderPipelineFactory()
+				.addTransformer(new BackdropRemoverTransformer())
+				.addTransformer(new RelativePositionTransformer(offset))
+				.addTransformer(new BackdropAdderTransformer(world.getChunkAt(chunkX, chunkY)))
+				.build();
+
+		return pipeline.render(this);
+	}
+
+	public void renderAt(EntityPlayer player, int chunkX, int chunkZ, ChunkMap chunkMap) {
 		PacketPlayOutMapChunk packet = new PacketPlayOutMapChunk();
 
 		try {
-			xCoordField.set(packet, coordPair.x);
-			zCoordField.set(packet, coordPair.z);
-			chunkMapField.set(packet, chunkMap);
+			xCoordField.set(packet, chunkX);
+			zCoordField.set(packet, chunkZ);
+
+			if (chunkMap != null)
+				chunkMapField.set(packet, chunkMap);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			e.printStackTrace();
 		}
 
-		return packet;
+		player.playerConnection.sendPacket(packet);
 	}
 
-	public ChunkMap getChunkMap(int mask, boolean isOverworld, boolean includeBiome) {
-		ChunkMap chunkMap = new ChunkMap();
-		List<Section> arraylist = Lists.newArrayList();
-
-		int j;
-		for (j = 0; j < sections.length; j++) {
-			if ((sectionMask & 1 << j) != 0) {
-				Section section = sections[j];
-				if (section != null && !section.isEmpty() && (mask & 1 << j) != 0) {
-					chunkMap.b |= 1 << j;
-					arraylist.add(section);
-				}
-			} else {
-				ChunkSection chunkSection = getChunk().getSections()[j];
-				if (chunkSection == null)
-					continue;
-				Section section = new Section(chunkSection);
-				if (!section.isEmpty() && (mask & 1 << j) != 0) {
-					chunkMap.b |= 1 << j;
-					arraylist.add(section);
-				}
-			}
-		}
-
-		int nonEmptyChunkSections = Integer.bitCount(chunkMap.b);
-		chunkMap.a = new byte[calculateNeededBytes(nonEmptyChunkSections, isOverworld, includeBiome)];
-
-		j = 0;
-		Section section;
-		Iterator<Section> iterator = arraylist.iterator();
-		while (iterator.hasNext()) {
-			section = iterator.next();
-			char[] idArray = section.getBlockIds();
-
-			for (int l = 0; l < idArray.length; l++) {
-				char c0 = idArray[l];
-				chunkMap.a[j++] = (byte) (c0 & 255);
-				chunkMap.a[j++] = (byte) (c0 >> 8 & 255);
-			}
-		}
-
-		byte[] lightArray = lightArrays[nonEmptyChunkSections];
-		System.arraycopy(lightArray, 0, chunkMap.a, j, lightArray.length);
-
-		if (isOverworld) {
-			j += lightArray.length;
-			System.arraycopy(lightArray, 0, chunkMap.a, j, lightArray.length);
-		}
-
-		if (includeBiome) {
-			j += lightArray.length;
-			System.arraycopy(getChunk().getBiomeIndex(), 0, chunkMap.a, j, 256);
-		}
-
-		return chunkMap;
+	public void render(EntityPlayer player) {
+		renderAt(player, coordPair.x, coordPair.z, null);
 	}
 
 	public TileEntity getTileEntity(BlockPosition pos, EnumTileEntityState entityState) {
@@ -361,15 +323,6 @@ public class VirtualChunk implements IDataHolder {
 			}
 		}
 		return Blocks.AIR.getBlockData();
-	}
-
-	private static int calculateNeededBytes(int i, boolean isOverworld, boolean includeBiome) {
-		int j = i * 2 * 16 * 16 * 16;
-		int k = i * 16 * 16 * 8;
-		int l = isOverworld ? i * 16 * 16 * 8 : 0;
-		int biome = includeBiome ? 256 : 0;
-
-		return j + k + l + biome;
 	}
 
 	/*

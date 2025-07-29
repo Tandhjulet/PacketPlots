@@ -23,6 +23,7 @@ import org.bukkit.event.block.Action;
 import com.google.common.collect.Lists;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.data.IDataHolder;
 import net.dashmc.plots.events.VirtualBlockBreakEvent;
@@ -30,6 +31,8 @@ import net.dashmc.plots.events.VirtualBlockCanBuildEvent;
 import net.dashmc.plots.events.VirtualBlockDamageEvent;
 import net.dashmc.plots.events.VirtualInteractEvent;
 import net.dashmc.plots.packets.extensions.VirtualBlockChangePacket;
+import net.dashmc.plots.pipeline.RenderPipeline;
+import net.dashmc.plots.pipeline.RenderPipelineFactory;
 import net.dashmc.plots.player.VirtualPlayerInteractManager;
 import net.dashmc.plots.utils.CuboidRegion;
 import net.dashmc.plots.utils.Debug;
@@ -41,6 +44,7 @@ import net.minecraft.server.v1_8_R3.BlockDoor;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Blocks;
 import net.minecraft.server.v1_8_R3.Chunk.EnumTileEntityState;
+import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 import net.minecraft.server.v1_8_R3.WorldSettings.EnumGamemode;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.Entity;
@@ -59,6 +63,7 @@ import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockBreakAnimation;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
+import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunkBulk;
 import net.minecraft.server.v1_8_R3.TileEntity;
 
 /*
@@ -84,6 +89,7 @@ public class VirtualEnvironment implements IDataHolder {
 	private @Getter UUID ownerUuid;
 	private @Getter InteractManager interactManager = new InteractManager();
 	private @Getter CuboidRegion region;
+	private @Getter @Setter RenderPipeline renderPipeline = RenderPipelineFactory.createEmptyPipeline();
 
 	public static Collection<VirtualEnvironment> getActive() {
 		return virtualEnvironments.values();
@@ -265,9 +271,8 @@ public class VirtualEnvironment implements IDataHolder {
 	}
 
 	public void render(EntityPlayer to) {
-		getVirtualChunks().values().forEach((val) -> {
-			to.playerConnection
-					.sendPacket(val.getPacket(65535, !((CraftWorld) world).getHandle().worldProvider.o(), false));
+		getVirtualChunks().values().forEach((vChunk) -> {
+			vChunk.render(to);
 		});
 	}
 
@@ -351,6 +356,7 @@ public class VirtualEnvironment implements IDataHolder {
 		}
 
 		Debug.log("Loaded chunks from save file: " + virtualChunks.size());
+		// TODO: if the loaded region != the saved one, delete blocks and add to block bag.
 	}
 
 	public void setTileEntity(BlockPosition blockPosition, TileEntity tileEntity) {

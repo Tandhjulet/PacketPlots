@@ -44,7 +44,7 @@ public class MapChunkBulkPacketInterceptor extends PacketInterceptor<PacketPlayO
 
 				VirtualChunk chunk = env.getVirtualChunks().get(hash);
 				try {
-					ChunkMap chunkMap = chunk.getChunkMap(65535, true, true);
+					ChunkMap chunkMap = env.getRenderPipeline().render(chunk);
 					chunkMaps[i] = chunkMap;
 				} catch (Exception e) {
 					e.printStackTrace();

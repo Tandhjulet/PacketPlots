@@ -6,7 +6,6 @@ import net.dashmc.plots.plot.VirtualItem;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
-import net.minecraft.server.v1_8_R3.Blocks;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EnumDirection;
 import net.minecraft.server.v1_8_R3.IBlockData;
@@ -26,7 +25,7 @@ public class VirtualItemBlock extends VirtualItem<ItemBlock> {
 
 		if (!VirtualBlock.shouldRemainAt(block, environment, pos))
 			pos = pos.shift(direction);
-		else if(isBorderPlace)
+		else if (isBorderPlace)
 			return false;
 
 		Block toPlace = ((ItemBlock) item.getItem()).d();

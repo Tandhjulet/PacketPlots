@@ -26,7 +26,7 @@ public class MapChunkPacketInterceptor extends PacketInterceptor<PacketPlayOutMa
 			int hash = Utils.getChunkCoordHash(xCoord, zCoord);
 			if (MapChunkBulkPacketInterceptor.coordPairs.contains(hash)) {
 				VirtualChunk chunk = environment.getVirtualChunks().get(hash);
-				chunkMapField.set(packet, chunk.getChunkMap(65535, true, true));
+				chunkMapField.set(packet, environment.getRenderPipeline().render(chunk));
 			}
 
 		} catch (IllegalArgumentException | IllegalAccessException e) {
