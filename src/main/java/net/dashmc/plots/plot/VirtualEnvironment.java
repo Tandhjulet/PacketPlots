@@ -44,7 +44,6 @@ import net.minecraft.server.v1_8_R3.BlockDoor;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Blocks;
 import net.minecraft.server.v1_8_R3.Chunk.EnumTileEntityState;
-import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 import net.minecraft.server.v1_8_R3.WorldSettings.EnumGamemode;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.Entity;
@@ -63,7 +62,6 @@ import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockBreakAnimation;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
-import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunkBulk;
 import net.minecraft.server.v1_8_R3.TileEntity;
 
 /*
@@ -213,7 +211,15 @@ public class VirtualEnvironment implements IDataHolder {
 	public void close() {
 		save();
 
-		// TODO: handle active connections
+		for (VirtualConnection conn : connections) {
+			if (conn.getOriginal() == this)
+				continue;
+
+			conn.visit(conn.getOriginal());
+		}
+
+		connections.clear();
+
 		virtualEnvironments.remove(getOwner());
 		virtualChunks.clear();
 	}
@@ -356,7 +362,8 @@ public class VirtualEnvironment implements IDataHolder {
 		}
 
 		Debug.log("Loaded chunks from save file: " + virtualChunks.size());
-		// TODO: if the loaded region != the saved one, delete blocks and add to block bag.
+		// TODO: if the loaded region != the saved one, delete blocks and add to block
+		// bag.
 	}
 
 	public void setTileEntity(BlockPosition blockPosition, TileEntity tileEntity) {

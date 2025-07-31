@@ -10,16 +10,9 @@ import java.util.Map;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.bukkit.Bukkit;
-import org.bukkit.util.BlockVector;
-
 import lombok.Getter;
 import net.dashmc.plots.data.IDataHolder;
 import net.dashmc.plots.nbt.NBTHelper;
-import net.dashmc.plots.pipeline.RenderPipeline;
-import net.dashmc.plots.pipeline.RenderPipelineFactory;
-import net.dashmc.plots.pipeline.transformers.BackdropAdderTransformer;
-import net.dashmc.plots.pipeline.transformers.BackdropRemoverTransformer;
-import net.dashmc.plots.pipeline.transformers.RelativePositionTransformer;
 import net.dashmc.plots.utils.CuboidRegion;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
@@ -254,17 +247,7 @@ public class VirtualChunk implements IDataHolder {
 		return chunk.getCoordPair().equals(getCoordPair());
 	}
 
-	public ChunkMap present(int chunkX, int chunkY, BlockVector offset) {
-		RenderPipeline pipeline = new RenderPipelineFactory()
-				.addTransformer(new BackdropRemoverTransformer())
-				.addTransformer(new RelativePositionTransformer(offset))
-				.addTransformer(new BackdropAdderTransformer(world.getChunkAt(chunkX, chunkY)))
-				.build();
-
-		return pipeline.render(this);
-	}
-
-	public void renderAt(EntityPlayer player, int chunkX, int chunkZ, ChunkMap chunkMap) {
+	public static void renderAt(EntityPlayer player, int chunkX, int chunkZ, ChunkMap chunkMap) {
 		PacketPlayOutMapChunk packet = new PacketPlayOutMapChunk();
 
 		try {
