@@ -1,13 +1,17 @@
 package net.dashmc.plots.config;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.Comment;
 import lombok.Getter;
+import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.utils.CuboidRegion;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 
@@ -33,5 +37,27 @@ public class PlotConfig extends OkaeriConfig {
 
 	@Comment("World to virtualize the chunks in")
 	World world = Bukkit.getWorlds().get(0);
+
+	@Comment("Safe location to teleport the player to when they visit/etc.")
+	Location safeLocation;
+
+	public Location getSafeLocation() {
+		if (safeLocation.getWorld() == null)
+			safeLocation.setWorld(world);
+
+		return safeLocation;
+	}
+
+	public void validate() {
+		for (Field field : getClass().getDeclaredFields()) {
+			try {
+				Object value = field.get(this);
+				Objects.requireNonNull(value, "Field " + field.getName() + " is null in "
+						+ PacketPlots.getInstance().getName() + " configuration!");
+			} catch (IllegalArgumentException | IllegalAccessException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 }

@@ -33,12 +33,14 @@ public class PacketPlots extends JavaPlugin {
 	private static final boolean BRIGADIER = Boolean
 			.parseBoolean(System.getProperty("okaeri.platform.brigadier", "true"));
 
+	private @Getter static boolean errored;
 	private @Getter static Commands commands;
 	private @Getter static PacketPlots instance;
 	private @Getter static PlotConfig plotConfig;
 
 	@Override
 	public void onEnable() {
+		errored = true;
 		instance = this;
 
 		plotConfig = ConfigManager.create(PlotConfig.class, (conf) -> {
@@ -52,7 +54,10 @@ public class PacketPlots extends JavaPlugin {
 			conf.load(true);
 		});
 
-		Debug.log("Found config file... virtualizing region " + plotConfig.getRegion() + " with chunks " + Arrays.toString(plotConfig.getRegion().getChunks()));
+		plotConfig.validate();
+
+		Debug.log("Found config file... virtualizing region " + plotConfig.getRegion() + " with chunks "
+				+ Arrays.toString(plotConfig.getRegion().getChunks()));
 
 		ConnectionListener.register();
 		PacketInterceptor.register();
@@ -75,6 +80,7 @@ public class PacketPlots extends JavaPlugin {
 		injector.registerInjectable("commands", commands);
 
 		commands.registerCommand(PlotCommand.class);
+		errored = false;
 	}
 
 	protected boolean canUseBrigadierPaper() {
@@ -88,6 +94,9 @@ public class PacketPlots extends JavaPlugin {
 
 	@Override
 	public void onDisable() {
+		if (isErrored())
+			return;
+
 		try {
 			commands.close();
 		} catch (IOException e) {

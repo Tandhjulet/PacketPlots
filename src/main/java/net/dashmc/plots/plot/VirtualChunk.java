@@ -247,7 +247,7 @@ public class VirtualChunk implements IDataHolder {
 		return chunk.getCoordPair().equals(getCoordPair());
 	}
 
-	public static void renderAt(EntityPlayer player, int chunkX, int chunkZ, ChunkMap chunkMap) {
+	public static PacketPlayOutMapChunk getRenderPacket(int chunkX, int chunkZ, ChunkMap chunkMap) {
 		PacketPlayOutMapChunk packet = new PacketPlayOutMapChunk();
 
 		try {
@@ -260,11 +260,12 @@ public class VirtualChunk implements IDataHolder {
 			e.printStackTrace();
 		}
 
-		player.playerConnection.sendPacket(packet);
+		return packet;
 	}
 
 	public void render(EntityPlayer player) {
-		renderAt(player, coordPair.x, coordPair.z, null);
+		PacketPlayOutMapChunk packet = getRenderPacket(coordPair.x, coordPair.z, null);
+		player.playerConnection.sendPacket(packet);
 	}
 
 	public TileEntity getTileEntity(BlockPosition pos, EnumTileEntityState entityState) {

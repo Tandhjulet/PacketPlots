@@ -2,6 +2,7 @@ package net.dashmc.plots.plot;
 
 import java.util.HashMap;
 
+import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
@@ -11,7 +12,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import lombok.Getter;
 import lombok.Setter;
+import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.packets.PacketInterceptor;
+import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.Packet;
 import net.minecraft.server.v1_8_R3.PacketListenerPlayIn;
@@ -61,6 +64,10 @@ public class VirtualConnection {
 		environment.getConnections().remove(this);
 		other.getConnections().add(this);
 		other.render(player);
+
+		Location safeLocation = PacketPlots.getPlotConfig().getSafeLocation();
+		Debug.log("teleporting player to " + safeLocation);
+		player.getBukkitEntity().teleport(safeLocation);
 
 		this.environment = other;
 	}
