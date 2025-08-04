@@ -14,7 +14,7 @@ public class NBTHelper {
 		NBTCompressedStreamTools.a(tag, os);
 	}
 
-	public static NBTTagCompound loadPayload(DataInput input, int i, NBTReadLimiter readLimiter) throws IOException {
+	public static NBTTagCompound loadPayload(DataInput input, NBTReadLimiter readLimiter) throws IOException {
 		return NBTCompressedStreamTools.a(input, readLimiter);
 	}
 }

@@ -199,7 +199,7 @@ public class VirtualChunk implements IDataHolder {
 
 		int tiles = stream.readInt();
 		for (int i = 0; i < tiles; i++) {
-			NBTTagCompound compound = NBTHelper.loadPayload(stream, sectionMask, new NBTReadLimiter(2097152L));
+			NBTTagCompound compound = NBTHelper.loadPayload(stream, new NBTReadLimiter(2097152L));
 			TileEntity tile = TileEntity.c(compound);
 
 			Debug.log("Loading tile with NBT " + compound.toString());

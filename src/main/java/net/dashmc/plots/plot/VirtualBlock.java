@@ -12,7 +12,9 @@ import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EntityLiving;
 import net.minecraft.server.v1_8_R3.EnumDirection;
 import net.minecraft.server.v1_8_R3.IBlockData;
+import net.minecraft.server.v1_8_R3.Item;
 import net.minecraft.server.v1_8_R3.ItemStack;
+import net.minecraft.server.v1_8_R3.TileEntity;
 
 public abstract class VirtualBlock<T extends Block> {
 	private static HashMap<Class<? extends Block>, VirtualBlock<? extends Block>> virtualBlocks = new HashMap<>();
@@ -39,6 +41,10 @@ public abstract class VirtualBlock<T extends Block> {
 	public boolean canPlace(T block, VirtualEnvironment environment, BlockPosition pos) {
 		return environment.getType(pos).getBlock().getMaterial().isReplaceable();
 	}
+
+	public void drop(T block, VirtualEnvironment environment, BlockPosition pos, BlockBag bag, TileEntity tile) {
+		bag.add(Item.getItemOf(block));
+	};
 
 	public boolean shouldRemainAt(VirtualEnvironment env, BlockPosition pos) {
 		return false;
@@ -67,6 +73,16 @@ public abstract class VirtualBlock<T extends Block> {
 			return virtualBlock.interact(
 					block, environment, blockposition, iblockdata, entityhuman,
 					enumdirection, f, f1, f2);
+		});
+	}
+
+	public static final <T extends Block> void handleDrop(Block block, VirtualEnvironment environment,
+			BlockPosition pos, BlockBag bag, TileEntity tile) {
+		getAndRun(block, (BiFunction<VirtualBlock<T>, T, Void>) (virtualBlock, actualBlock) -> {
+			if (virtualBlock == null || block == null)
+				return null;
+			virtualBlock.drop(actualBlock, environment, pos, bag, tile);
+			return null;
 		});
 	}
 

@@ -358,6 +358,8 @@ public class VirtualEnvironment implements IDataHolder {
 		Debug.log("Loaded chunks from save file: " + virtualChunks.size());
 		// TODO: if the loaded region != the saved one, delete blocks and add to block
 		// bag.
+
+		getBlockBag().deserialize(stream);
 	}
 
 	public void setTileEntity(BlockPosition blockPosition, TileEntity tileEntity) {
@@ -392,6 +394,11 @@ public class VirtualEnvironment implements IDataHolder {
 			virtualChunk.serialize(stream);
 		}
 
+		getBlockBag().serialize(stream);
+	}
+
+	public BlockBag getBlockBag() {
+		return BlockBag.getBlockBag(getOwner());
 	}
 
 	public class InteractManager {
@@ -700,8 +707,8 @@ public class VirtualEnvironment implements IDataHolder {
 				}
 
 				if (flag && couldSet) {
-					// here the item would drop normally - we won't do that :-)
 					// nmsBlock.a(nmsWorld, player, pos, nmsData, tile);
+					VirtualBlock.handleDrop(nmsBlock, VirtualEnvironment.this, pos, BlockBag.getBlockBag(player), tile);
 				}
 			}
 

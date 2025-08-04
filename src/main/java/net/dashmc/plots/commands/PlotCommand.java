@@ -11,6 +11,7 @@ import eu.okaeri.commands.bukkit.annotation.Permission;
 import eu.okaeri.commands.bukkit.response.BukkitResponse;
 import eu.okaeri.commands.bukkit.response.RawResponse;
 import eu.okaeri.commands.service.CommandService;
+import net.dashmc.plots.plot.BlockBag;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
 
@@ -29,6 +30,17 @@ public class PlotCommand implements CommandService {
 			return RawResponse.of("Invalidt argument {arg}. Vælg on eller off.").with("arg", value);
 
 		return RawResponse.of("Toggled plot virtualization {arg}!").with("arg", value.toLowerCase());
+	}
+
+	@Completion(arg = "action", value = { "empty" })
+	@Executor(pattern = "blockbag *")
+	public BukkitResponse blockBag(@Context Player sender, @Arg String action) {
+		if (action.equals("empty")) {
+			BlockBag.getBlockBag(sender).emptyIfPossible();
+			return RawResponse.of("Du tømte din block bag!");
+		}
+
+		return RawResponse.of("Invalidt argument! Vælg empty for at tømme din block bag!");
 	}
 
 	@Executor(pattern = "visit *")

@@ -1,0 +1,134 @@
+package net.dashmc.plots.plot;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.UUID;
+
+import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
+import org.bukkit.entity.Player;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import net.dashmc.plots.data.IDataHolder;
+import net.dashmc.plots.events.BlockBagUpdatedEvent;
+import net.dashmc.plots.nbt.NBTHelper;
+import net.dashmc.plots.utils.Debug;
+import net.minecraft.server.v1_8_R3.EntityPlayer;
+import net.minecraft.server.v1_8_R3.Item;
+import net.minecraft.server.v1_8_R3.ItemStack;
+import net.minecraft.server.v1_8_R3.NBTReadLimiter;
+import net.minecraft.server.v1_8_R3.NBTTagCompound;
+
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+public class BlockBag implements IDataHolder {
+	private static final HashMap<UUID, BlockBag> blockBags = new HashMap<>();
+
+	public static BlockBag getBlockBag(EntityPlayer player) {
+		return blockBags.computeIfAbsent(player.getUniqueID(), uuid -> new BlockBag(player));
+	}
+
+	public static BlockBag getBlockBag(Player player) {
+		return getBlockBag(((CraftPlayer) player).getHandle());
+	}
+
+	public static BlockBag deserialize(DataInputStream inputStream, EntityPlayer player) throws IOException {
+		BlockBag bag = new BlockBag(player);
+		bag.deserialize(inputStream);
+		return bag;
+	}
+
+	private final EntityPlayer player;
+	@Getter
+	private LinkedList<ItemStack> bag = new LinkedList<>();
+
+	public int size() {
+		return bag.size();
+	}
+
+	public void emptyIfPossible() {
+		Debug.log("size of bag: " + bag.size());
+
+		while (bag.size() > 0) {
+			ItemStack item = bag.peekFirst();
+			boolean hasSpace = player.inventory.pickup(item);
+
+			if (hasSpace) {
+				bag.removeFirst();
+				continue;
+			}
+
+			break;
+		}
+
+		BlockBagUpdatedEvent event = createAndCallUpdateEvent(false, false);
+		if (event.isCancelled())
+			throw new UnsupportedOperationException();
+	}
+
+	public void addAll(ItemStack[] items) {
+		for (ItemStack item : items) {
+			add(item, false);
+		}
+
+		BlockBagUpdatedEvent event = createAndCallUpdateEvent(true, false);
+		if (!event.isCancelled())
+			return;
+
+		for (int i = 0; i < items.length; i++)
+			bag.removeLast();
+
+	}
+
+	public void add(ItemStack item, boolean callEvent) {
+		if (item == null)
+			return;
+
+		boolean hasSpace = player.inventory.pickup(item);
+		if (hasSpace)
+			return;
+
+		bag.addLast(item);
+
+		createAndCallUpdateEvent(true, true);
+	}
+
+	private BlockBagUpdatedEvent createAndCallUpdateEvent(boolean isDeposit, boolean removeIfCancelled) {
+		BlockBagUpdatedEvent event = new BlockBagUpdatedEvent(isDeposit, this);
+		Bukkit.getPluginManager().callEvent(event);
+		if (event.isCancelled())
+			bag.removeLast();
+
+		return event;
+	}
+
+	public void add(Item item) {
+		add(new ItemStack(item), true);
+	}
+
+	@Override
+	public void deserialize(DataInputStream stream) throws IOException {
+		int listSize = stream.readInt();
+		for (int i = 0; i < listSize; i++) {
+			NBTTagCompound compound = NBTHelper.loadPayload(stream, new NBTReadLimiter(2097152L));
+			ItemStack item = ItemStack.createStack(compound);
+			bag.addLast(item);
+		}
+	}
+
+	@Override
+	public void serialize(DataOutputStream stream) throws IOException {
+		stream.writeInt(bag.size());
+		Iterator<ItemStack> iterator = bag.iterator();
+		while (iterator.hasNext()) {
+			NBTTagCompound compound = new NBTTagCompound();
+			iterator.next().save(compound);
+			NBTHelper.writePayload(stream, compound);
+		}
+	}
+}

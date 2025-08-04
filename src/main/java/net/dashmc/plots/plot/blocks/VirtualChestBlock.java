@@ -2,6 +2,7 @@ package net.dashmc.plots.plot.blocks;
 
 import java.util.Iterator;
 
+import net.dashmc.plots.plot.BlockBag;
 import net.dashmc.plots.plot.VirtualBlock;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.minecraft.server.v1_8_R3.Block;
@@ -21,6 +22,14 @@ import net.minecraft.server.v1_8_R3.TileEntity;
 import net.minecraft.server.v1_8_R3.TileEntityChest;
 
 public class VirtualChestBlock extends VirtualBlock<BlockChest> {
+
+	public void drop(BlockChest block, VirtualEnvironment environment, BlockPosition pos, BlockBag bag,
+			TileEntity tile) {
+		ITileInventory inventory = getInventory(environment, pos, block);
+		bag.addAll(inventory.getContents());
+
+		super.drop(block, environment, pos, bag, tile);
+	};
 
 	@Override
 	public boolean interact(BlockChest block, VirtualEnvironment environment, BlockPosition blockposition,
