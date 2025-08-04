@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import net.dashmc.plots.pipeline.RenderPipeline;
 import net.dashmc.plots.plot.VirtualChunk;
+import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.utils.MethodWrapper;
 import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.Chunk;
@@ -25,7 +26,7 @@ public class Paster {
 		ChunkMap map = pipeline.render(chunk);
 
 		try {
-			PacketPlayOutMapChunk packet = VirtualChunk.getRenderPacket(atChunkX, atChunkZ, map);
+			PacketPlayOutMapChunk packet = VirtualConnection.getRenderPacket(atChunkX, atChunkZ, map);
 			packetSender.call(packet);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();

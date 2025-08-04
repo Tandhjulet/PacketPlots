@@ -273,13 +273,7 @@ public class VirtualEnvironment implements IDataHolder {
 		VirtualConnection conn = VirtualConnection.establish(player, this);
 		connections.add(conn);
 
-		render(player);
-	}
-
-	public void render(EntityPlayer to) {
-		getVirtualChunks().values().forEach((vChunk) -> {
-			vChunk.render(to);
-		});
+		conn.refreshVirtualizedChunks();
 	}
 
 	public IBlockData getType(BlockPosition pos) {

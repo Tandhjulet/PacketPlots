@@ -23,7 +23,6 @@ import net.minecraft.server.v1_8_R3.Chunk;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.ChunkProviderServer;
 import net.minecraft.server.v1_8_R3.ChunkSection;
-import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.IContainer;
 import net.minecraft.server.v1_8_R3.NBTReadLimiter;
@@ -32,7 +31,6 @@ import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_8_R3.TileEntity;
 import net.minecraft.server.v1_8_R3.World;
 import net.minecraft.server.v1_8_R3.Chunk.EnumTileEntityState;
-import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 
 /*
  * Data structure:
@@ -245,27 +243,6 @@ public class VirtualChunk implements IDataHolder {
 			return false;
 		VirtualChunk chunk = (VirtualChunk) other;
 		return chunk.getCoordPair().equals(getCoordPair());
-	}
-
-	public static PacketPlayOutMapChunk getRenderPacket(int chunkX, int chunkZ, ChunkMap chunkMap) {
-		PacketPlayOutMapChunk packet = new PacketPlayOutMapChunk();
-
-		try {
-			xCoordField.set(packet, chunkX);
-			zCoordField.set(packet, chunkZ);
-
-			if (chunkMap != null)
-				chunkMapField.set(packet, chunkMap);
-		} catch (IllegalArgumentException | IllegalAccessException e) {
-			e.printStackTrace();
-		}
-
-		return packet;
-	}
-
-	public void render(EntityPlayer player) {
-		PacketPlayOutMapChunk packet = getRenderPacket(coordPair.x, coordPair.z, null);
-		player.playerConnection.sendPacket(packet);
 	}
 
 	public TileEntity getTileEntity(BlockPosition pos, EnumTileEntityState entityState) {

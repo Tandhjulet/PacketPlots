@@ -1,5 +1,6 @@
 package net.dashmc.plots.plot;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 
 import org.bukkit.Location;
@@ -19,9 +20,14 @@ import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.Packet;
 import net.minecraft.server.v1_8_R3.PacketListenerPlayIn;
 import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
+import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
+import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 
 @Getter
 public class VirtualConnection {
+	private static Field xCoordField;
+	private static Field zCoordField;
+	private static Field chunkMapField;
 	private static final HashMap<Class<?>, PacketInterceptor<?>> packetModifiers = new HashMap<>();
 
 	private @Setter boolean moved = false;
@@ -63,13 +69,36 @@ public class VirtualConnection {
 		setVisiting(!other.equals(original));
 		environment.getConnections().remove(this);
 		other.getConnections().add(this);
-		other.render(player);
 
 		Location safeLocation = PacketPlots.getPlotConfig().getSafeLocation();
 		Debug.log("teleporting player to " + safeLocation);
 		player.getBukkitEntity().teleport(safeLocation);
 
 		this.environment = other;
+		refreshVirtualizedChunks();
+	}
+
+	public static PacketPlayOutMapChunk getRenderPacket(int chunkX, int chunkZ, ChunkMap chunkMap) {
+		PacketPlayOutMapChunk packet = new PacketPlayOutMapChunk();
+
+		try {
+			xCoordField.set(packet, chunkX);
+			zCoordField.set(packet, chunkZ);
+
+			if (chunkMap != null)
+				chunkMapField.set(packet, chunkMap);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+
+		return packet;
+	}
+
+	public void refreshVirtualizedChunks() {
+		environment.getVirtualChunks().values().forEach((chunk) -> {
+			PacketPlayOutMapChunk chunkPacket = getRenderPacket(chunk.getCoordPair().x, chunk.getCoordPair().z, null);
+			player.playerConnection.sendPacket(chunkPacket);
+		});
 	}
 
 	public static VirtualConnection establish(EntityPlayer player, VirtualEnvironment environment) {
@@ -102,6 +131,21 @@ public class VirtualConnection {
 		}
 
 		return false;
+	}
+
+	static {
+		try {
+			xCoordField = PacketPlayOutMapChunk.class.getDeclaredField("a");
+			xCoordField.setAccessible(true);
+
+			zCoordField = PacketPlayOutMapChunk.class.getDeclaredField("b");
+			zCoordField.setAccessible(true);
+
+			chunkMapField = PacketPlayOutMapChunk.class.getDeclaredField("c");
+			chunkMapField.setAccessible(true);
+		} catch (NoSuchFieldException | SecurityException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
