@@ -4,9 +4,7 @@ TODO:
 
 -   autosave på andet thread (interval i config)
 -   ingen entities kan spawne i plot
--   fix fil der fucker
 -   sounds
--   npc'er forsvinder (?)
 -   flere blocks:
     -   BlockBookshelf
     -   BlockCarpet
