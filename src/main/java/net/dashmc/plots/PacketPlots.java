@@ -20,6 +20,7 @@ import eu.okaeri.validator.OkaeriValidator;
 import eu.okaeri.validator.policy.NullPolicy;
 import lombok.Getter;
 import net.dashmc.plots.commands.PlotCommand;
+import net.dashmc.plots.compatibility.PluginCompatibility;
 import net.dashmc.plots.config.PlotConfig;
 import net.dashmc.plots.config.serializers.BlockPositionSerializer;
 import net.dashmc.plots.config.serializers.CuboidRegionSerializer;
@@ -80,6 +81,10 @@ public class PacketPlots extends JavaPlugin {
 		injector.registerInjectable("commands", commands);
 
 		commands.registerCommand(PlotCommand.class);
+
+		PluginCompatibility.load();
+		Debug.log("Loaded compatibilities: " + Arrays.toString(PluginCompatibility.getCompatibilities().toArray()));
+
 		errored = false;
 	}
 

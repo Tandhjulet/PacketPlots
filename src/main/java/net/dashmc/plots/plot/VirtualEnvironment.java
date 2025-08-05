@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -135,8 +136,12 @@ public class VirtualEnvironment implements IDataHolder {
 
 		this.region = PacketPlots.getPlotConfig().getRegion();
 
+		Debug.log(Arrays.toString(region.getChunks()));
+
 		for (ChunkCoordIntPair coord : region.getChunks()) {
+			Debug.log("creating chunk @ " + coord.toString());
 			VirtualChunk chunk = new VirtualChunk(this, coord);
+			Debug.log("created chunk " + chunk);
 			virtualChunks.put(coord.hashCode(), chunk);
 		}
 

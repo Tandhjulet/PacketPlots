@@ -6,6 +6,10 @@ authors:
   - Tandhjulet
   - Vqlde
 
+softdepend:
+  - Vulcan
+  - packetevents
+
 # commands:
 #   plot:
 #     usage: /<command>

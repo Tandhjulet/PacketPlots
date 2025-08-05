@@ -30,6 +30,7 @@ import net.minecraft.server.v1_8_R3.NBTTagCompound;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_8_R3.TileEntity;
 import net.minecraft.server.v1_8_R3.World;
+import net.minecraft.server.v1_8_R3.WorldServer;
 import net.minecraft.server.v1_8_R3.Chunk.EnumTileEntityState;
 
 /*
@@ -61,7 +62,10 @@ public class VirtualChunk implements IDataHolder {
 		this.environment = environment;
 		this.coordPair = coordPair;
 		this.world = environment.getNmsWorld();
-		this.chunk = world.getChunkAt(coordPair.x, coordPair.z);
+
+		WorldServer world = (WorldServer) this.world;
+		this.chunk = world.chunkProviderServer.getChunkAt(coordPair.x, coordPair.z);
+
 		this.sectionMask = environment.getRegion().getSectionMask();
 		int i = 0;
 		for (ChunkSection section : chunk.getSections()) {
@@ -71,6 +75,9 @@ public class VirtualChunk implements IDataHolder {
 
 			i++;
 		}
+
+		Debug.log("vChunk sections: " + Arrays.toString(chunk.getSections()));
+		Debug.log("tiles: " + chunk.getTileEntities());
 
 		for (Map.Entry<BlockPosition, TileEntity> entry : chunk.getTileEntities().entrySet()) {
 			setBlock(entry.getKey(), Blocks.AIR.getBlockData());

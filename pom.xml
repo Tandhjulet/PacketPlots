@@ -32,6 +32,18 @@
 			<scope>provided</scope>
 		</dependency>
 
+		<!--
+			Vulcan AC
+			From: https://discord.gg/X7yGGJNKuX
+		-->
+		<dependency>
+			<groupId>me.frap.vulcan.api</groupId>
+			<artifactId>VulcanAPI</artifactId>
+			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/libs/VulcanAPI.jar</systemPath>
+		</dependency>
+
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>

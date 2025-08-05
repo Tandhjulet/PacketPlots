@@ -14,6 +14,8 @@ import io.netty.channel.ChannelPromise;
 import lombok.Getter;
 import lombok.Setter;
 import net.dashmc.plots.PacketPlots;
+import net.dashmc.plots.compatibility.CompatibilityMode;
+import net.dashmc.plots.compatibility.PluginCompatibility;
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
@@ -55,6 +57,7 @@ public class VirtualConnection {
 		open();
 	}
 
+	private boolean injected;
 	private EntityPlayer player;
 	private VirtualEnvironment environment;
 	private VirtualEnvironment original;
@@ -94,9 +97,23 @@ public class VirtualConnection {
 		return packet;
 	}
 
+	public PacketPlayOutMapChunk getRenderPacket(VirtualChunk vChunk) {
+		// as the packet will be intercepted anyways, its a waste to spend time
+		// calculating the chunkmap just for it to get thrown away. thus, only calculate
+		// if needed
+		ChunkMap map;
+		if (this.injected && !PluginCompatibility.isActive(CompatibilityMode.FORCE_CHUNKMAP_SEND)) {
+			map = null;
+		} else {
+			map = vChunk.getEnvironment().getRenderPipeline().render(vChunk);
+		}
+
+		return getRenderPacket(vChunk.getCoordPair().x, vChunk.getCoordPair().z, map);
+	}
+
 	public void refreshVirtualizedChunks() {
 		environment.getVirtualChunks().values().forEach((chunk) -> {
-			PacketPlayOutMapChunk chunkPacket = getRenderPacket(chunk.getCoordPair().x, chunk.getCoordPair().z, null);
+			PacketPlayOutMapChunk chunkPacket = getRenderPacket(chunk);
 			player.playerConnection.sendPacket(chunkPacket);
 		});
 	}
@@ -112,6 +129,7 @@ public class VirtualConnection {
 		}
 
 		connections.put(player, this);
+		this.injected = true;
 	}
 
 	public void close() {
@@ -121,6 +139,7 @@ public class VirtualConnection {
 		}
 
 		connections.remove(player);
+		this.injected = false;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -151,19 +170,18 @@ public class VirtualConnection {
 	/**
 	 * PacketHandler for this virtual connection. Sorts through the packets and
 	 * passes the important ones to VirtualConnection#intercept.
+	 * 
+	 * https://minecraft.wiki/w/Protocol?oldid=2772100
 	 */
 	private class PacketHandler extends ChannelDuplexHandler {
 		// Outgoing
 		@SuppressWarnings("unchecked")
 		@Override
 		public void write(ChannelHandlerContext chx, Object obj, ChannelPromise promise) throws Exception {
-			// Packets to cancel/modify if they occur in the environment
-
-			// Block updates:
-			// Block change (https://minecraft.wiki/w/Protocol?oldid=2772100#Block_Change)
-			// Multi block change
-			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Multi_Block_Change)
-			// Block action (https://minecraft.wiki/w/Protocol?oldid=2772100#Block_Action)
+			if (!(obj instanceof Packet)) {
+				super.write(chx, obj, promise);
+				return;
+			}
 
 			Packet<PacketListenerPlayOut> packet = (Packet<PacketListenerPlayOut>) obj;
 			if (intercept(packet))
@@ -176,14 +194,11 @@ public class VirtualConnection {
 		@SuppressWarnings("unchecked")
 		@Override
 		public void channelRead(ChannelHandlerContext chx, Object obj) throws Exception {
-			// Packets to pass to the env. if they occur there
+			if (!(obj instanceof Packet)) {
+				super.channelRead(chx, obj);
+				return;
+			}
 
-			// Interactions
-			// Player Digging
-			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Player_Digging)
-			// Player Block Placement
-			// (https://minecraft.wiki/w/Protocol?oldid=2772100#Player_Block_Placement)
-			// Update Sign (https://minecraft.wiki/w/Protocol?oldid=2772100#Update_Sign)
 			Packet<PacketListenerPlayIn> packet = (Packet<PacketListenerPlayIn>) obj;
 			if (intercept(packet))
 				return;

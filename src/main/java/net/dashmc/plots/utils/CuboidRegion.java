@@ -134,6 +134,10 @@ public class CuboidRegion {
 		return includes(pos.getX(), pos.getY(), pos.getZ());
 	}
 
+	public boolean includes(Location pos) {
+		return includes((int) pos.getX(), (int) pos.getY(), (int) pos.getZ());
+	}
+
 	public BlockPosition getMax() {
 		if (max != null)
 			return max;
