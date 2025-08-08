@@ -23,6 +23,7 @@ import net.minecraft.server.v1_8_R3.TileEntityChest;
 
 public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 
+	@Override
 	public void drop(BlockChest block, VirtualEnvironment environment, BlockPosition pos, BlockBag bag,
 			TileEntity tile) {
 		ITileInventory inventory = getInventory(environment, pos, block);

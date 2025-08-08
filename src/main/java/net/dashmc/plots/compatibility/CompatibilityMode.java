@@ -2,9 +2,10 @@ package net.dashmc.plots.compatibility;
 
 import lombok.Getter;
 import net.dashmc.plots.compatibility.compatibilities.ChunkMapSendCompatibility;
+import net.dashmc.plots.compatibility.compatibilities.VulcanCompatibility;
 
 public enum CompatibilityMode {
-	VULCAN(),
+	VULCAN(new VulcanCompatibility()),
 	FORCE_CHUNKMAP_SEND(new ChunkMapSendCompatibility());
 
 	@Getter

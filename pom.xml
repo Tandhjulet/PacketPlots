@@ -32,18 +32,6 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!--
-			Vulcan AC
-			From: https://discord.gg/X7yGGJNKuX
-		-->
-		<dependency>
-			<groupId>me.frap.vulcan.api</groupId>
-			<artifactId>VulcanAPI</artifactId>
-			<version>1.0</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/libs/VulcanAPI.jar</systemPath>
-		</dependency>
-
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -103,17 +91,6 @@
 							<outputDirectory>C:\Users\Tandhjul\Desktop\1.8.9\plugins</outputDirectory>
 						</configuration>
 					</plugin>
-
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-compiler-plugin</artifactId>
-						<version>3.8.1</version>
-						<configuration>
-							<compilerArgs>
-								<arg>-parameters</arg>
-							</compilerArgs>
-						</configuration>
-					</plugin>
 				</plugins>
 			</build>
 		</profile>
@@ -131,6 +108,17 @@
 		</resources>
 
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.1</version>
+				<configuration>
+					<compilerArgs>
+						<arg>-parameters</arg>
+					</compilerArgs>
+				</configuration>
+			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
