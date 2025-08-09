@@ -11,12 +11,14 @@ import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockChest;
+import net.minecraft.server.v1_8_R3.BlockEnderChest;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Container;
 import net.minecraft.server.v1_8_R3.ContainerChest;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.IInventory;
+import net.minecraft.server.v1_8_R3.InventoryEnderChest;
 import net.minecraft.server.v1_8_R3.InventoryLargeChest;
 import net.minecraft.server.v1_8_R3.PacketPlayInCloseWindow;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockAction;
@@ -64,6 +66,12 @@ public class WindowClosePacketInterceptor extends PacketInterceptor<PacketPlayIn
 
 			success = closeContainer(player, doubleChest.left, environment)
 					&& closeContainer(player, doubleChest.right, environment);
+		} else if (chest.e() instanceof InventoryEnderChest) {
+			InventoryEnderChest enderChest = (InventoryEnderChest) chest.e();
+			enderChest.closeContainer(player);
+
+			success = true;
+
 		} else {
 			Bukkit.getLogger().warning("Window close packet sent with unrecognized inventory: " + chest.e().getClass());
 		}

@@ -8,6 +8,7 @@ import net.dashmc.plots.plot.blocks.VirtualBlockDoor;
 import net.dashmc.plots.plot.blocks.VirtualCarpetBlock;
 import net.dashmc.plots.plot.blocks.VirtualChestBlock;
 import net.dashmc.plots.plot.blocks.VirtualDirtBlock;
+import net.dashmc.plots.plot.blocks.VirtualEnderChestBlock;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
@@ -200,6 +201,7 @@ public abstract class VirtualBlock<T extends Block> {
 		new VirtualDirtBlock().register();
 		new VirtualCarpetBlock().register();
 		new VirtualBlockDoor().register();
+		new VirtualEnderChestBlock().register();
 	}
 
 }
