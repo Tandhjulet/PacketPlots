@@ -111,6 +111,10 @@ public class BlockBag implements IDataHolder {
 		add(new ItemStack(item), true);
 	}
 
+	public void add(ItemStack item) {
+		add(item, true);
+	}
+
 	@Override
 	public void deserialize(DataInputStream stream) throws IOException {
 		int listSize = stream.readInt();

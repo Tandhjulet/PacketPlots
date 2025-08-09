@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import lombok.Getter;
 import net.dashmc.plots.events.VirtualBlockPlaceEvent;
 import net.dashmc.plots.plot.items.VirtualItemBlock;
+import net.dashmc.plots.plot.items.VirtualItemCloth;
 import net.dashmc.plots.plot.items.VirtualItemMultiTexture;
 import net.dashmc.plots.utils.Debug;
 import net.dashmc.plots.utils.Utils;
@@ -126,6 +127,7 @@ public abstract class VirtualItem<T extends Item> {
 	static {
 		new VirtualItemBlock().register();
 		new VirtualItemMultiTexture().register();
+		new VirtualItemCloth().register();
 	}
 
 }

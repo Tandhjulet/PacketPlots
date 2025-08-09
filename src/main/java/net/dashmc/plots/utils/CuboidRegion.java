@@ -144,7 +144,6 @@ public class CuboidRegion {
 
 	public boolean includesWithBuffer(Location pos) {
 		int buffer = 1;
-		Debug.log("standing @ " + pos.getBlockX() + ", " + pos.getBlockZ());
 		return includes(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ(), buffer);
 	}
 

@@ -2,10 +2,13 @@ package net.dashmc.plots.packets.interceptors;
 
 import java.lang.reflect.Method;
 
+import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_8_R3.event.CraftEventFactory;
+
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockChest;
 import net.minecraft.server.v1_8_R3.BlockPosition;
@@ -25,15 +28,22 @@ public class WindowClosePacketInterceptor extends PacketInterceptor<PacketPlayIn
 
 	@Override
 	public boolean intercept(PacketPlayInCloseWindow packet, VirtualConnection connection) {
+		Debug.log("window close packet!");
+
 		VirtualEnvironment environment = connection.getEnvironment();
 		EntityPlayer player = connection.getPlayer();
-		CraftEventFactory.handleInventoryCloseEvent(player);
 		PlayerInventory playerInventory = player.inventory;
 
 		if (!(player.activeContainer instanceof ContainerChest))
 			return false;
 
 		ContainerChest chest = (ContainerChest) player.activeContainer;
+		if (isCustomInventory(chest.e()))
+			return false;
+
+		Debug.log("packet will be intercepted.");
+
+		CraftEventFactory.handleInventoryCloseEvent(player);
 
 		boolean success = false;
 		if (chest.e() instanceof TileEntityChest) { // single chest
@@ -54,6 +64,8 @@ public class WindowClosePacketInterceptor extends PacketInterceptor<PacketPlayIn
 
 			success = closeContainer(player, doubleChest.left, environment)
 					&& closeContainer(player, doubleChest.right, environment);
+		} else {
+			Bukkit.getLogger().warning("Window close packet sent with unrecognized inventory: " + chest.e().getClass());
 		}
 
 		if (success) {
@@ -67,6 +79,11 @@ public class WindowClosePacketInterceptor extends PacketInterceptor<PacketPlayIn
 		}
 		// intercept packet to prevent dupes - do nothing tho
 		return true;
+	}
+
+	private boolean isCustomInventory(IInventory inventory) {
+		Class<?> enclosing = inventory.getClass().getEnclosingClass();
+		return enclosing != null && enclosing.getName().endsWith(".CraftInventoryCustom");
 	}
 
 	public boolean isChestLocationValid(IInventory inventory, VirtualEnvironment env) {

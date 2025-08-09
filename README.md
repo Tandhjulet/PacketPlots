@@ -6,8 +6,6 @@ TODO:
 -   ingen entities kan spawne i plot
 -   sounds
 -   flere blocks:
-    -   BlockBookshelf
-    -   BlockCarpet
     -   BlockDoor
     -   BlockEnderChest
     -   BlockFence

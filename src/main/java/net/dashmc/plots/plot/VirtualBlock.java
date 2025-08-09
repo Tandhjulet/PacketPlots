@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.function.BiFunction;
 
 import net.dashmc.plots.plot.blocks.VirtualBlockAir;
+import net.dashmc.plots.plot.blocks.VirtualCarpetBlock;
 import net.dashmc.plots.plot.blocks.VirtualChestBlock;
 import net.dashmc.plots.plot.blocks.VirtualDirtBlock;
 import net.minecraft.server.v1_8_R3.Block;
@@ -42,9 +43,14 @@ public abstract class VirtualBlock<T extends Block> {
 		return environment.getType(pos).getBlock().getMaterial().isReplaceable();
 	}
 
-	public void drop(T block, VirtualEnvironment environment, BlockPosition pos, BlockBag bag, TileEntity tile) {
-		bag.add(Item.getItemOf(block));
+	public void drop(T block, VirtualEnvironment environment, BlockPosition pos, IBlockData data, BlockBag bag,
+			TileEntity tile) {
+		bag.add(new ItemStack(Item.getItemOf(block), 1, getDropData(data)));
 	};
+
+	public int getDropData(IBlockData data) {
+		return 0;
+	}
 
 	public boolean shouldRemainAt(VirtualEnvironment env, BlockPosition pos) {
 		return false;
@@ -76,12 +82,14 @@ public abstract class VirtualBlock<T extends Block> {
 		});
 	}
 
-	public static final <T extends Block> void handleDrop(Block block, VirtualEnvironment environment,
+	public static final <T extends Block> void handleDrop(Block block, IBlockData data, VirtualEnvironment environment,
 			BlockPosition pos, BlockBag bag, TileEntity tile) {
 		getAndRun(block, (BiFunction<VirtualBlock<T>, T, Void>) (virtualBlock, actualBlock) -> {
-			if (virtualBlock == null || block == null)
+			if (virtualBlock == null || block == null) {
+				bag.add(Item.getItemOf(block));
 				return null;
-			virtualBlock.drop(actualBlock, environment, pos, bag, tile);
+			}
+			virtualBlock.drop(actualBlock, environment, pos, data, bag, tile);
 			return null;
 		});
 	}
@@ -165,6 +173,7 @@ public abstract class VirtualBlock<T extends Block> {
 		new VirtualBlockAir().register();
 		new VirtualChestBlock().register();
 		new VirtualDirtBlock().register();
+		new VirtualCarpetBlock().register();
 	}
 
 }

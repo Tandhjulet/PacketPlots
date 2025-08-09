@@ -14,7 +14,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
-import me.frep.vulcan.api.VulcanAPI;
 import me.frep.vulcan.api.event.VulcanFlagEvent;
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.compatibility.ICompatibility;

@@ -713,7 +713,8 @@ public class VirtualEnvironment implements IDataHolder {
 
 				if (flag && couldSet) {
 					// nmsBlock.a(nmsWorld, player, pos, nmsData, tile);
-					VirtualBlock.handleDrop(nmsBlock, VirtualEnvironment.this, pos, BlockBag.getBlockBag(player), tile);
+					VirtualBlock.handleDrop(nmsBlock, nmsData, VirtualEnvironment.this, pos,
+							BlockBag.getBlockBag(player), tile);
 				}
 			}
 
