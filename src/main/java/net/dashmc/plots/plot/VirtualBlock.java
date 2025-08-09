@@ -47,7 +47,12 @@ public abstract class VirtualBlock<T extends Block> {
 		return environment.getType(pos).getBlock().getMaterial().isReplaceable();
 	}
 
-	public void drop(T block, VirtualEnvironment environment, BlockPosition pos, IBlockData data, BlockBag bag,
+	public void onRelatedUpdated(T block, VirtualEnvironment env, BlockPosition pos, BlockBag bag,
+			IBlockData newBlockData) {
+	}
+
+	public void onBlockHarvested(T block, VirtualEnvironment environment, BlockPosition pos, IBlockData data,
+			BlockBag bag,
 			TileEntity tile) {
 		bag.add(new ItemStack(Item.getItemOf(block), 1, getDropData(data)));
 	};
@@ -86,6 +91,18 @@ public abstract class VirtualBlock<T extends Block> {
 		virtualBlocks.put(getClazz(), this);
 	}
 
+	public static final <T extends Block> void notify(Block block, VirtualEnvironment env, BlockPosition pos,
+			BlockBag bag,
+			IBlockData newBlockData) {
+		getAndRun(block, (BiFunction<VirtualBlock<T>, T, Void>) (virtualBlock, actualBlock) -> {
+			if (virtualBlock == null || actualBlock == null)
+				return null;
+
+			virtualBlock.onRelatedUpdated(actualBlock, env, pos, bag, newBlockData);
+			return null;
+		});
+	}
+
 	public static final <T extends Block> AxisAlignedBB getBoundingBox(Block block, VirtualEnvironment env,
 			BlockPosition pos, IBlockData state) {
 		return getAndRun(block, (BiFunction<VirtualBlock<T>, T, AxisAlignedBB>) (virtualBlock, actualBlock) -> {
@@ -109,14 +126,15 @@ public abstract class VirtualBlock<T extends Block> {
 		});
 	}
 
-	public static final <T extends Block> void handleDrop(Block block, IBlockData data, VirtualEnvironment environment,
+	public static final <T extends Block> void harvestBlock(Block block, IBlockData data,
+			VirtualEnvironment environment,
 			BlockPosition pos, BlockBag bag, TileEntity tile) {
 		getAndRun(block, (BiFunction<VirtualBlock<T>, T, Void>) (virtualBlock, actualBlock) -> {
 			if (virtualBlock == null || block == null) {
 				bag.add(Item.getItemOf(block));
 				return null;
 			}
-			virtualBlock.drop(actualBlock, environment, pos, data, bag, tile);
+			virtualBlock.onBlockHarvested(actualBlock, environment, pos, data, bag, tile);
 			return null;
 		});
 	}

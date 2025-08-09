@@ -2,19 +2,33 @@ package net.dashmc.plots.plot.blocks;
 
 import java.lang.reflect.InvocationTargetException;
 
+import net.dashmc.plots.plot.BlockBag;
 import net.dashmc.plots.plot.VirtualBlock;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.MethodWrapper;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import net.minecraft.server.v1_8_R3.BlockDoor;
 import net.minecraft.server.v1_8_R3.BlockPosition;
+import net.minecraft.server.v1_8_R3.Blocks;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EnumDirection;
 import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.Material;
 import net.minecraft.server.v1_8_R3.PacketPlayOutWorldEvent;
+import net.minecraft.server.v1_8_R3.TileEntity;
 
 public class VirtualBlockDoor extends VirtualBlock<BlockDoor> {
+
+	@Override
+	public void onBlockHarvested(BlockDoor block, VirtualEnvironment environment, BlockPosition pos, IBlockData data,
+			BlockBag bag, TileEntity tile) {
+		// BlockPosition lower = pos.down();
+		// if (data.get(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.UPPER
+		// && environment.getType(lower).getBlock() == block) {
+		// environment.setBlock(pos, Blocks.AIR.getBlockData(), 3);
+		// }
+		bag.add(block.getDropType(data, null, 0));
+	}
 
 	@Override
 	public boolean interact(BlockDoor block, VirtualEnvironment environment, BlockPosition pos,
@@ -34,6 +48,27 @@ public class VirtualBlockDoor extends VirtualBlock<BlockDoor> {
 		int eventCode = ((Boolean) iblockdata.get(BlockDoor.OPEN)).booleanValue() ? 1003 : 1006;
 		environment.broadcastPacket(new PacketPlayOutWorldEvent(eventCode, pos, 0, false));
 		return true;
+	}
+
+	@Override
+	public void onRelatedUpdated(BlockDoor block, VirtualEnvironment env, BlockPosition pos, BlockBag bag,
+			IBlockData newBlockData) {
+		if (newBlockData.get(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.UPPER) {
+			BlockPosition lower = pos.down();
+			IBlockData door = env.getType(lower);
+
+			if (door.getBlock() != block) {
+				env.setBlock(pos, Blocks.AIR.getBlockData(), 3);
+			}
+		} else {
+			BlockPosition upper = pos.up();
+			IBlockData door = env.getType(upper);
+
+			if (door.getBlock() != block) {
+				env.setBlock(pos, Blocks.AIR.getBlockData(), 3);
+				bag.add(block.getDropType(newBlockData, null, 0));
+			}
+		}
 	}
 
 	@Override

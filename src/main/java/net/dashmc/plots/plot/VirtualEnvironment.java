@@ -63,6 +63,7 @@ import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockBreakAnimation;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
+import net.minecraft.server.v1_8_R3.PacketPlayOutWorldEvent;
 import net.minecraft.server.v1_8_R3.TileEntity;
 
 /*
@@ -315,14 +316,28 @@ public class VirtualEnvironment implements IDataHolder {
 
 		VirtualChunk chunk = virtualChunks.get(Utils.getChunkCoordHash(pos));
 		boolean succeeded = chunk.setBlock(pos, blockData);
-		if (succeeded)
-			notify(pos);
+		if (succeeded) {
+			// any blocks removed due to physics will become property of environment owner
+			notify(pos, BlockBag.getBlockBag(getOwner()));
+		}
 
 		return succeeded;
 	}
 
-	private void notify(BlockPosition pos) {
+	private void notify(BlockPosition pos, BlockBag bag) {
+		notifyBlock(pos.west(), bag);
+		notifyBlock(pos.east(), bag);
+		notifyBlock(pos.down(), bag);
+		notifyBlock(pos.up(), bag);
+		notifyBlock(pos.north(), bag);
+		notifyBlock(pos.south(), bag);
+
 		broadcastPacket(new VirtualBlockChangePacket(this, pos).getPacket());
+	}
+
+	private void notifyBlock(BlockPosition pos, BlockBag bag) {
+		IBlockData ibd = getType(pos);
+		VirtualBlock.notify(ibd.getBlock(), this, pos, bag, ibd);
 	}
 
 	public boolean isValidLocation(BlockPosition pos) {
@@ -696,6 +711,8 @@ public class VirtualEnvironment implements IDataHolder {
 				}
 			}
 
+			broadcastPacket(new PacketPlayOutWorldEvent(2001, pos, Block.getCombinedId(nmsData), false));
+
 			boolean couldSet = setBlock(pos, Blocks.AIR.getBlockData(), 3);
 			Debug.log("tried setting block server-side at " + pos.toString() + " to air");
 
@@ -714,7 +731,7 @@ public class VirtualEnvironment implements IDataHolder {
 
 				if (flag && couldSet) {
 					// nmsBlock.a(nmsWorld, player, pos, nmsData, tile);
-					VirtualBlock.handleDrop(nmsBlock, nmsData, VirtualEnvironment.this, pos,
+					VirtualBlock.harvestBlock(nmsBlock, nmsData, VirtualEnvironment.this, pos,
 							BlockBag.getBlockBag(player), tile);
 				}
 			}

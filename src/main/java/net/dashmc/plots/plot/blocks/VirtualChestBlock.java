@@ -24,12 +24,13 @@ import net.minecraft.server.v1_8_R3.TileEntityChest;
 public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 
 	@Override
-	public void drop(BlockChest block, VirtualEnvironment environment, BlockPosition pos, IBlockData data, BlockBag bag,
+	public void onBlockHarvested(BlockChest block, VirtualEnvironment environment, BlockPosition pos, IBlockData data,
+			BlockBag bag,
 			TileEntity tile) {
 		ITileInventory inventory = getInventory(environment, pos, block);
 		bag.addAll(inventory.getContents());
 
-		super.drop(block, environment, pos, data, bag, tile);
+		super.onBlockHarvested(block, environment, pos, data, bag, tile);
 	};
 
 	@Override
