@@ -4,9 +4,11 @@ import java.util.HashMap;
 import java.util.function.BiFunction;
 
 import net.dashmc.plots.plot.blocks.VirtualBlockAir;
+import net.dashmc.plots.plot.blocks.VirtualBlockDoor;
 import net.dashmc.plots.plot.blocks.VirtualCarpetBlock;
 import net.dashmc.plots.plot.blocks.VirtualChestBlock;
 import net.dashmc.plots.plot.blocks.VirtualDirtBlock;
+import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.EntityHuman;
@@ -52,6 +54,19 @@ public abstract class VirtualBlock<T extends Block> {
 		return 0;
 	}
 
+	public AxisAlignedBB getCollisionBoundingBox(T block, VirtualEnvironment env, BlockPosition pos, IBlockData state) {
+		double minX = block.B();
+		double minY = block.D();
+		double minZ = block.F();
+
+		double maxX = block.C();
+		double maxY = block.E();
+		double maxZ = block.G();
+
+		return new AxisAlignedBB((double) pos.getX() + minX, (double) pos.getY() + minY, (double) pos.getZ() + minZ,
+				(double) pos.getX() + maxX, (double) pos.getY() + maxY, (double) pos.getZ() + maxZ);
+	}
+
 	public boolean shouldRemainAt(VirtualEnvironment env, BlockPosition pos) {
 		return false;
 	}
@@ -67,6 +82,16 @@ public abstract class VirtualBlock<T extends Block> {
 
 	public void register() {
 		virtualBlocks.put(getClazz(), this);
+	}
+
+	public static final <T extends Block> AxisAlignedBB getBoundingBox(Block block, VirtualEnvironment env,
+			BlockPosition pos, IBlockData state) {
+		return getAndRun(block, (BiFunction<VirtualBlock<T>, T, AxisAlignedBB>) (virtualBlock, actualBlock) -> {
+			if (virtualBlock == null || actualBlock == null)
+				return block.a((net.minecraft.server.v1_8_R3.World) null, pos, state);
+
+			return virtualBlock.getCollisionBoundingBox(actualBlock, env, pos, state);
+		});
 	}
 
 	public static final <T extends Block> boolean interact(VirtualEnvironment environment,
@@ -174,6 +199,7 @@ public abstract class VirtualBlock<T extends Block> {
 		new VirtualChestBlock().register();
 		new VirtualDirtBlock().register();
 		new VirtualCarpetBlock().register();
+		new VirtualBlockDoor().register();
 	}
 
 }

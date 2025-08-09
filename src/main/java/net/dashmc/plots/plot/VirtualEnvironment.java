@@ -167,11 +167,12 @@ public class VirtualEnvironment implements IDataHolder {
 	}
 
 	// https://github.com/Attano/Spigot-1.8/blob/9db48bc15e203179554b8d992ca6b0a528c8d300/net/minecraft/server/v1_8_R3/World.java#L2664
-	public boolean isBuildable(Block block, BlockPosition pos, boolean hasBoundingBox, EnumDirection dir, Entity entity,
+	public boolean isBuildable(Block block, BlockPosition pos, boolean ignoreCollision, EnumDirection dir,
+			Entity entity,
 			ItemStack itemStack) {
 		Block curr = getType(pos).getBlock();
-		AxisAlignedBB bb = hasBoundingBox ? null
-				: block.a((net.minecraft.server.v1_8_R3.World) null, pos, curr.getBlockData());
+		AxisAlignedBB bb = ignoreCollision ? null
+				: VirtualBlock.getBoundingBox(block, this, pos, curr.getBlockData());
 
 		final boolean defaultReturn;
 		if (bb != null && !isNoOtherEntitiesInside(bb, entity)) {

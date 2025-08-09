@@ -9,8 +9,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Getter
 public class MethodWrapper<T> {
-	public final Object instance;
-	public final Method method;
+	private final Object instance;
+	private final Method method;
+
+	public MethodWrapper(Object instance, String methodName, Class<?>... params)
+			throws NoSuchMethodException, SecurityException {
+		this.instance = instance;
+		method = instance.getClass().getDeclaredMethod(methodName, params);
+		method.setAccessible(true);
+	}
 
 	@SuppressWarnings("unchecked")
 	public T call(Object... args)
