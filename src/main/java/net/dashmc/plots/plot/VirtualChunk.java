@@ -173,6 +173,9 @@ public class VirtualChunk implements IDataHolder {
 		Iterator<TileEntity> tiles = tileEntities.values().iterator();
 		while (tiles.hasNext()) {
 			Packet<?> updatePacket = tiles.next().getUpdatePacket();
+			if (updatePacket == null)
+				continue;
+
 			to.playerConnection.sendPacket(updatePacket);
 		}
 	}
