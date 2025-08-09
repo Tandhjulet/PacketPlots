@@ -12,6 +12,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.player.VirtualPlayerInteractManager;
+import net.dashmc.plots.plot.BlockBag;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Debug;
@@ -41,6 +42,7 @@ public class ConnectionListener implements Listener {
 		VirtualConnection.get(((CraftPlayer) player).getHandle()).close();
 		// environment.stopVirtualization(((CraftPlayer) player).getHandle());
 		environment.close();
+		BlockBag.removeBlockBag(player.getUniqueId());
 	}
 
 	public static void register() {

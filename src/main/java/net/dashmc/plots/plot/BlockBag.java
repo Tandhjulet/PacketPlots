@@ -37,6 +37,10 @@ public class BlockBag implements IDataHolder {
 		return getBlockBag(((CraftPlayer) player).getHandle());
 	}
 
+	public static void removeBlockBag(UUID uuid) {
+		blockBags.remove(uuid);
+	}
+
 	public static BlockBag deserialize(DataInputStream inputStream, EntityPlayer player) throws IOException {
 		BlockBag bag = new BlockBag(player);
 		bag.deserialize(inputStream);
@@ -108,6 +112,9 @@ public class BlockBag implements IDataHolder {
 	}
 
 	public void add(Item item) {
+		if (item == null)
+			return;
+
 		add(new ItemStack(item), true);
 	}
 
@@ -134,5 +141,6 @@ public class BlockBag implements IDataHolder {
 			iterator.next().save(compound);
 			NBTHelper.writePayload(stream, compound);
 		}
+
 	}
 }
