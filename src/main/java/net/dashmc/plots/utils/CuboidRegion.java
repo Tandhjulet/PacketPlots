@@ -124,10 +124,14 @@ public class CuboidRegion {
 		}
 	}
 
+	public boolean includes(int x, int y, int z, int buffer) {
+		return x >= (minX - buffer) && x <= (maxX + buffer) &&
+				y >= (minY - buffer) && y <= (maxY + buffer) &&
+				z >= (minZ - buffer) && z <= (maxZ + buffer);
+	}
+
 	public boolean includes(int x, int y, int z) {
-		return x >= minX && x <= maxX &&
-				y >= minY && y <= maxY &&
-				z >= minZ && z <= maxZ;
+		return includes(x, y, z, 0);
 	}
 
 	public boolean includes(BlockPosition pos) {
@@ -135,7 +139,13 @@ public class CuboidRegion {
 	}
 
 	public boolean includes(Location pos) {
-		return includes((int) pos.getX(), (int) pos.getY(), (int) pos.getZ());
+		return includes(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ());
+	}
+
+	public boolean includesWithBuffer(Location pos) {
+		int buffer = 1;
+		Debug.log("standing @ " + pos.getBlockX() + ", " + pos.getBlockZ());
+		return includes(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ(), buffer);
 	}
 
 	public BlockPosition getMax() {
