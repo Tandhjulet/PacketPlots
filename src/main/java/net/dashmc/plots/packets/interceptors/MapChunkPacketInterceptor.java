@@ -2,6 +2,9 @@ package net.dashmc.plots.packets.interceptors;
 
 import java.lang.reflect.Field;
 
+import org.bukkit.Bukkit;
+
+import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.VirtualChunk;
 import net.dashmc.plots.plot.VirtualConnection;
@@ -27,6 +30,10 @@ public class MapChunkPacketInterceptor extends PacketInterceptor<PacketPlayOutMa
 			if (MapChunkBulkPacketInterceptor.coordPairs.contains(hash)) {
 				VirtualChunk chunk = environment.getVirtualChunks().get(hash);
 				chunkMapField.set(packet, environment.getRenderPipeline().render(chunk));
+
+				Bukkit.getScheduler().runTask(PacketPlots.getInstance(), () -> {
+					chunk.sendTiles(conn.getPlayer());
+				});
 			}
 
 		} catch (IllegalArgumentException | IllegalAccessException e) {

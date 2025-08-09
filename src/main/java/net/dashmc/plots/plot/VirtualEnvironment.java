@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.Bukkit;
@@ -59,7 +60,6 @@ import net.minecraft.server.v1_8_R3.ItemSword;
 import net.minecraft.server.v1_8_R3.Material;
 import net.minecraft.server.v1_8_R3.MinecraftServer;
 import net.minecraft.server.v1_8_R3.Packet;
-import net.minecraft.server.v1_8_R3.PacketListenerPlayOut;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockBreakAnimation;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
@@ -209,10 +209,37 @@ public class VirtualEnvironment implements IDataHolder {
 		return itemStack.d(block) || itemStack.x();
 	}
 
-	public void broadcastPacket(Packet<PacketListenerPlayOut> packet) {
+	public void broadcastPacket(Packet<?> packet) {
+		if (packet == null)
+			return;
+
 		for (VirtualConnection conn : connections) {
 			conn.getPlayer().playerConnection.sendPacket(packet);
 		}
+	}
+
+	public void broadcastTile(TileEntity tile) {
+		broadcastPacket(tile.getUpdatePacket());
+	}
+
+	public void sendTile(TileEntity tile, EntityPlayer to) {
+		Packet<?> packet = tile.getUpdatePacket();
+		if (packet == null)
+			return;
+
+		to.playerConnection.sendPacket(packet);
+	}
+
+	public void sendTiles(EntityPlayer to) {
+		Iterator<TileEntity> tileIterator = tileEntities.iterator();
+		while (tileIterator.hasNext()) {
+			TileEntity tile = tileIterator.next();
+			sendTile(tile, to);
+		}
+	}
+
+	public void sendTiles(Player to) {
+		sendTiles(((CraftPlayer) to).getHandle());
 	}
 
 	public void close() {

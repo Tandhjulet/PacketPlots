@@ -15,6 +15,7 @@ import net.dashmc.plots.plot.items.VirtualItemBlock;
 import net.dashmc.plots.plot.items.VirtualItemCloth;
 import net.dashmc.plots.plot.items.VirtualItemDoor;
 import net.dashmc.plots.plot.items.VirtualItemMultiTexture;
+import net.dashmc.plots.plot.items.VirtualItemSkull;
 import net.dashmc.plots.utils.Debug;
 import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.Block;
@@ -23,6 +24,7 @@ import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EnumDirection;
 import net.minecraft.server.v1_8_R3.IBlockData;
+import net.minecraft.server.v1_8_R3.IContainer;
 import net.minecraft.server.v1_8_R3.Item;
 import net.minecraft.server.v1_8_R3.ItemStack;
 
@@ -114,6 +116,9 @@ public abstract class VirtualItem<T extends Item> {
 						VirtualBlock.onPlace(env, placedAt, newBlockData);
 					}
 
+					if (newBlockData.getBlock() instanceof IContainer)
+						env.broadcastTile(env.getTileEntity(placedAt));
+
 				}
 			}
 
@@ -130,6 +135,7 @@ public abstract class VirtualItem<T extends Item> {
 		new VirtualItemMultiTexture().register();
 		new VirtualItemCloth().register();
 		new VirtualItemDoor().register();
+		new VirtualItemSkull().register();
 	}
 
 }

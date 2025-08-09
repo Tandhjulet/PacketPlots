@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import org.bukkit.Bukkit;
+
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.VirtualChunk;
@@ -43,6 +45,11 @@ public class MapChunkBulkPacketInterceptor extends PacketInterceptor<PacketPlayO
 				int hash = Utils.getChunkCoordHash(xCoords[i], zCoords[i]);
 
 				VirtualChunk chunk = env.getVirtualChunks().get(hash);
+
+				Bukkit.getScheduler().runTask(PacketPlots.getInstance(), () -> {
+					chunk.sendTiles(conn.getPlayer());
+				});
+
 				try {
 					ChunkMap chunkMap = env.getRenderPipeline().render(chunk);
 					chunkMaps[i] = chunkMap;

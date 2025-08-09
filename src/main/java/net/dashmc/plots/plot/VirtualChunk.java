@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.commons.lang.NotImplementedException;
@@ -23,10 +24,12 @@ import net.minecraft.server.v1_8_R3.Chunk;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.ChunkProviderServer;
 import net.minecraft.server.v1_8_R3.ChunkSection;
+import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.IContainer;
 import net.minecraft.server.v1_8_R3.NBTReadLimiter;
 import net.minecraft.server.v1_8_R3.NBTTagCompound;
+import net.minecraft.server.v1_8_R3.Packet;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_8_R3.TileEntity;
 import net.minecraft.server.v1_8_R3.World;
@@ -117,11 +120,11 @@ public class VirtualChunk implements IDataHolder {
 		if (currentBlock == blockData)
 			return false;
 
-		Block block1 = currentBlock.getBlock();
-		Block block = blockData.getBlock();
+		Block currBlock = currentBlock.getBlock();
+		Block newBlock = blockData.getBlock();
 		Section section = sections[yPos];
 		if (section == null) {
-			if (block == Blocks.AIR)
+			if (newBlock == Blocks.AIR)
 				return false;
 
 			ChunkSection chunkSection = getChunk().getSections()[yPos];
@@ -132,29 +135,29 @@ public class VirtualChunk implements IDataHolder {
 		}
 		section.setBlock(relX, (byte) (pos.getY() & 15), relZ, blockData);
 
-		if (block1 != block) {
+		if (currBlock != newBlock) {
 			if (!this.world.isClientSide) {
 				// block1.remove(this.world, pos, currentBlock);
 			}
 		}
 
-		if (section.getBlock(relX, (byte) (pos.getY() & 15), relZ) != block)
+		if (section.getBlock(relX, (byte) (pos.getY() & 15), relZ) != newBlock)
 			return false;
 
-		if (block1 instanceof IContainer) {
+		if (currBlock instanceof IContainer) {
 			TileEntity tileEntity = getTileEntity(pos, EnumTileEntityState.CHECK);
 			if (tileEntity != null)
 				tileEntity.E();
 		}
 
-		if (block1 != block && block instanceof BlockContainer) {
+		if (currBlock != newBlock && newBlock instanceof BlockContainer) {
 			VirtualBlock.onPlace(environment, pos, blockData);
 		}
 
-		if (block instanceof IContainer) {
+		if (newBlock instanceof IContainer) {
 			TileEntity tileEntity = getTileEntity(pos, EnumTileEntityState.CHECK);
 			if (tileEntity == null) {
-				tileEntity = ((IContainer) block).a(world, block.toLegacyData(blockData));
+				tileEntity = ((IContainer) newBlock).a(world, newBlock.toLegacyData(blockData));
 				environment.setTileEntity(pos, tileEntity);
 			}
 
@@ -163,6 +166,15 @@ public class VirtualChunk implements IDataHolder {
 		}
 
 		return true;
+	}
+
+	public void sendTiles(EntityPlayer to) {
+		Debug.log("sending tiles in chunk to player: " + tileEntities.size());
+		Iterator<TileEntity> tiles = tileEntities.values().iterator();
+		while (tiles.hasNext()) {
+			Packet<?> updatePacket = tiles.next().getUpdatePacket();
+			to.playerConnection.sendPacket(updatePacket);
+		}
 	}
 
 	public void setTileEntity(BlockPosition pos, TileEntity entity) {

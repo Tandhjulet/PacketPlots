@@ -63,4 +63,10 @@ public class PlotCommand implements CommandService {
 		return RawResponse.of("Du besøger nu {name}'s plot!")
 				.with("name", name);
 	}
+
+	@Executor(pattern = "debug")
+	public void debug(@Context Player sender) {
+		VirtualEnvironment env = VirtualEnvironment.get(sender);
+		env.sendTiles(sender);
+	}
 }
