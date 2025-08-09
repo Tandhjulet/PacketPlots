@@ -172,7 +172,7 @@ public class VirtualEnvironment implements IDataHolder {
 			ItemStack itemStack) {
 		Block curr = getType(pos).getBlock();
 		AxisAlignedBB bb = ignoreCollision ? null
-				: VirtualBlock.getBoundingBox(block, this, pos, curr.getBlockData());
+				: VirtualBlock.getBoundingBox(block, this, pos, block.getBlockData());
 
 		final boolean defaultReturn;
 		if (bb != null && !isNoOtherEntitiesInside(bb, entity)) {

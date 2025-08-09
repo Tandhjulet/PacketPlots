@@ -11,7 +11,6 @@ import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockChest;
-import net.minecraft.server.v1_8_R3.BlockEnderChest;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Container;
 import net.minecraft.server.v1_8_R3.ContainerChest;
