@@ -1,7 +1,6 @@
 package net.dashmc.plots.commands;
 
 import org.bukkit.OfflinePlayer;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import eu.okaeri.commands.annotation.Arg;
@@ -15,9 +14,6 @@ import eu.okaeri.commands.service.CommandService;
 import net.dashmc.plots.plot.BlockBag;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
-import net.dashmc.plots.utils.Debug;
-import net.minecraft.server.v1_8_R3.EntityPlayer;
-import net.minecraft.server.v1_8_R3.NBTTagCompound;
 
 @eu.okaeri.commands.annotation.Command(label = "plot", description = "Plot command")
 public class PlotCommand implements CommandService {
@@ -66,13 +62,5 @@ public class PlotCommand implements CommandService {
 
 		return RawResponse.of("Du besøger nu {name}'s plot!")
 				.with("name", name);
-	}
-
-	@Executor(pattern = "debug")
-	public void debug(@Context Player sender) {
-		EntityPlayer player = ((CraftPlayer) sender).getHandle();
-		NBTTagCompound compound = player.bZ().getTag();
-		Debug.log(compound.toString());
-
 	}
 }
