@@ -88,7 +88,7 @@ public class BlockBag implements IDataHolder {
 			if (item == null)
 				return;
 
-			add(item, false);
+			add(item, false, true);
 		}
 
 		BlockBagUpdatedEvent event = createAndCallUpdateEvent(true, false);
@@ -100,7 +100,7 @@ public class BlockBag implements IDataHolder {
 
 	}
 
-	private void add(ItemStack item, boolean callEvents) {
+	private void add(ItemStack item, boolean callEvents, boolean tryAddToPlayerInventory) {
 		if (item == null)
 			return;
 
@@ -120,9 +120,11 @@ public class BlockBag implements IDataHolder {
 				return;
 		}
 
-		boolean hasSpace = player.inventory.pickup(item);
-		if (hasSpace)
-			return;
+		if (tryAddToPlayerInventory) {
+			boolean hasSpace = player.inventory.pickup(item);
+			if (hasSpace)
+				return;
+		}
 
 		bag.addLast(item);
 
@@ -139,15 +141,19 @@ public class BlockBag implements IDataHolder {
 		return event;
 	}
 
+	public void addToBag(ItemStack item) {
+		add(item, true, false);
+	}
+
 	public void add(Item item) {
 		if (item == null)
 			return;
 
-		add(new ItemStack(item), true);
+		add(new ItemStack(item), true, true);
 	}
 
 	public void add(ItemStack item) {
-		add(item, true);
+		add(item, true, true);
 	}
 
 	@Override
