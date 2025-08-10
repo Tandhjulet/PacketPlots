@@ -38,10 +38,15 @@ public class ConnectionListener implements Listener {
 	@EventHandler
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
+
+		VirtualConnection connection = VirtualConnection.get(((CraftPlayer) player).getHandle());
+		if (connection != null)
+			connection.close();
+
 		VirtualEnvironment environment = VirtualEnvironment.get(player);
-		VirtualConnection.get(((CraftPlayer) player).getHandle()).close();
-		// environment.stopVirtualization(((CraftPlayer) player).getHandle());
-		environment.close();
+		if (environment != null)
+			environment.close();
+
 		BlockBag.removeBlockBag(player.getUniqueId());
 	}
 

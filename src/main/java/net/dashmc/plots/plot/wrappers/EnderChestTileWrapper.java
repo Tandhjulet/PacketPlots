@@ -33,7 +33,7 @@ public class EnderChestTileWrapper extends TileEntityEnderChest {
 
 	@Override
 	public void b() {
-		++this.g;
+		++wrapped.g;
 
 		PacketPlayOutBlockAction chestOpenPacket = new PacketPlayOutBlockAction(this.position, Blocks.ENDER_CHEST, 1,
 				1);
@@ -42,7 +42,7 @@ public class EnderChestTileWrapper extends TileEntityEnderChest {
 
 	@Override
 	public void d() {
-		--this.g;
+		--wrapped.g;
 
 		PacketPlayOutBlockAction chestClosePacket = new PacketPlayOutBlockAction(this.position, Blocks.ENDER_CHEST, 1,
 				0);
