@@ -9,6 +9,7 @@ authors:
 softdepend:
   - Vulcan
   - packetevents
+  - HeadDatabase
 
 # commands:
 #   plot:

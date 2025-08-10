@@ -17,6 +17,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.dashmc.plots.data.IDataHolder;
 import net.dashmc.plots.events.BlockBagUpdatedEvent;
+import net.dashmc.plots.events.PreBlockBagDepositEvent;
 import net.dashmc.plots.nbt.NBTHelper;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
@@ -25,6 +26,7 @@ import net.minecraft.server.v1_8_R3.ItemStack;
 import net.minecraft.server.v1_8_R3.NBTReadLimiter;
 import net.minecraft.server.v1_8_R3.NBTTagCompound;
 
+@Getter
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public class BlockBag implements IDataHolder {
 	private static final HashMap<UUID, BlockBag> blockBags = new HashMap<>();
@@ -48,7 +50,6 @@ public class BlockBag implements IDataHolder {
 	}
 
 	private final EntityPlayer player;
-	@Getter
 	private LinkedList<ItemStack> bag = new LinkedList<>();
 
 	public int size() {
@@ -76,7 +77,17 @@ public class BlockBag implements IDataHolder {
 	}
 
 	public void addAll(ItemStack[] items) {
+		PreBlockBagDepositEvent preUpdateEvent = new PreBlockBagDepositEvent(items, this);
+		Bukkit.getPluginManager().callEvent(preUpdateEvent);
+		if (preUpdateEvent.isCancelled())
+			return;
+
+		items = preUpdateEvent.getItems();
+
 		for (ItemStack item : items) {
+			if (item == null)
+				return;
+
 			add(item, false);
 		}
 
@@ -89,9 +100,25 @@ public class BlockBag implements IDataHolder {
 
 	}
 
-	public void add(ItemStack item, boolean callEvent) {
+	private void add(ItemStack item, boolean callEvents) {
 		if (item == null)
 			return;
+
+		if (callEvents) {
+			PreBlockBagDepositEvent preUpdateEvent = new PreBlockBagDepositEvent(item, this);
+			Bukkit.getPluginManager().callEvent(preUpdateEvent);
+			if (preUpdateEvent.isCancelled())
+				return;
+
+			if (preUpdateEvent.getItems().length != 1)
+				// this should never happen as it's currently declared final - but that might
+				// change later
+				throw new RuntimeException("Length mismatch. Array length got modified.");
+
+			item = preUpdateEvent.getItems()[0];
+			if (item == null)
+				return;
+		}
 
 		boolean hasSpace = player.inventory.pickup(item);
 		if (hasSpace)
@@ -99,7 +126,8 @@ public class BlockBag implements IDataHolder {
 
 		bag.addLast(item);
 
-		createAndCallUpdateEvent(true, true);
+		if (callEvents)
+			createAndCallUpdateEvent(true, true);
 	}
 
 	private BlockBagUpdatedEvent createAndCallUpdateEvent(boolean isDeposit, boolean removeIfCancelled) {

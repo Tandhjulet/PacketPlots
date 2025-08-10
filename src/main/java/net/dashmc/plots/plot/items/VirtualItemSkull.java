@@ -7,7 +7,6 @@ import com.mojang.authlib.GameProfile;
 import net.dashmc.plots.plot.VirtualBlock;
 import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.plot.VirtualItem;
-import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.BlockSkull;
@@ -59,9 +58,6 @@ public class VirtualItemSkull extends VirtualItem<ItemSkull> {
 			return true;
 
 		TileEntitySkull skull = (TileEntitySkull) tile;
-		Debug.log("item data: " + item.getData());
-		Debug.log("item tag: " + item.getTag());
-		Debug.log("rotation: " + i);
 		if (item.getData() == 3) {
 			GameProfile profile = null;
 			if (item.hasTag()) {

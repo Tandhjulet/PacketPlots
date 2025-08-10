@@ -52,6 +52,7 @@ import net.minecraft.server.v1_8_R3.Entity;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.EnumDirection;
+import net.minecraft.server.v1_8_R3.IBlockAccess;
 import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.IInventory;
 import net.minecraft.server.v1_8_R3.ITileInventory;
@@ -76,7 +77,7 @@ import net.minecraft.server.v1_8_R3.TileEntity;
  * combined blockdata in sequence z => y => x (so to unpack, loop x => y => z)
  */
 
-public class VirtualEnvironment implements IDataHolder {
+public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 	private static final HashMap<Player, VirtualEnvironment> virtualEnvironments = new HashMap<>();
 	private static final File DATA_DIRECTORY = new File(PacketPlots.getInstance().getDataFolder(), "data");
 
@@ -719,11 +720,10 @@ public class VirtualEnvironment implements IDataHolder {
 			Debug.log("block is not air");
 
 			if (nmsBlock == Blocks.SKULL && !player.playerInteractManager.isCreative()) {
-				boolean flag = setBlock(pos, Blocks.AIR.getBlockData(), 3);
-				// postBreak excluded:
-				// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L243
+				VirtualBlock.harvestBlock(nmsBlock, nmsData, VirtualEnvironment.this, pos,
+						BlockBag.getBlockBag(player), tile);
 
-				return flag;
+				return setBlock(pos, Blocks.AIR.getBlockData(), 3);
 			}
 
 			if (player.playerInteractManager.c()) {
@@ -769,6 +769,16 @@ public class VirtualEnvironment implements IDataHolder {
 
 	static {
 		DATA_DIRECTORY.mkdirs();
+	}
+
+	@Override
+	public int getBlockPower(BlockPosition arg0, EnumDirection arg1) {
+		throw new UnsupportedOperationException("Unimplemented method 'getBlockPower'");
+	}
+
+	@Override
+	public boolean isEmpty(BlockPosition arg0) {
+		throw new UnsupportedOperationException("Unimplemented method 'isEmpty'");
 	}
 
 }

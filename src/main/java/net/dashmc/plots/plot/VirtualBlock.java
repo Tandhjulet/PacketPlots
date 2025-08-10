@@ -10,6 +10,7 @@ import net.dashmc.plots.plot.blocks.VirtualChestBlock;
 import net.dashmc.plots.plot.blocks.VirtualDirtBlock;
 import net.dashmc.plots.plot.blocks.VirtualEnderChestBlock;
 import net.dashmc.plots.plot.blocks.VirtualFenceGateBlock;
+import net.dashmc.plots.plot.blocks.VirtualSkullBlock;
 import net.dashmc.plots.plot.blocks.VirtualStainedGlassBlock;
 import net.dashmc.plots.plot.blocks.VirtualStainedGlassPaneBlock;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
@@ -56,8 +57,12 @@ public abstract class VirtualBlock<T extends Block> {
 	public void onBlockHarvested(T block, VirtualEnvironment environment, BlockPosition pos, IBlockData data,
 			BlockBag bag,
 			TileEntity tile) {
-		bag.add(new ItemStack(Item.getItemOf(block), 1, getDropData(data)));
+		bag.add(new ItemStack(Item.getItemOf(block), 1, getDropData(environment, pos)));
 	};
+
+	public int getDropData(VirtualEnvironment env, BlockPosition pos) {
+		return getDropData(env.getType(pos));
+	}
 
 	public int getDropData(IBlockData data) {
 		return 0;
@@ -226,6 +231,7 @@ public abstract class VirtualBlock<T extends Block> {
 		new VirtualFenceGateBlock().register();
 		new VirtualStainedGlassBlock().register();
 		new VirtualStainedGlassPaneBlock().register();
+		new VirtualSkullBlock().register();
 	}
 
 }

@@ -16,10 +16,10 @@ import org.bukkit.plugin.Plugin;
 
 import me.frep.vulcan.api.event.VulcanFlagEvent;
 import net.dashmc.plots.PacketPlots;
-import net.dashmc.plots.compatibility.ICompatibility;
+import net.dashmc.plots.compatibility.CompatibilityLoader;
 import net.dashmc.plots.utils.Debug;
 
-public class VulcanCompatibility implements ICompatibility {
+public class VulcanCompatibility extends CompatibilityLoader {
 
 	@Override
 	public boolean shouldActivate() {

@@ -2,21 +2,23 @@ package net.dashmc.plots.compatibility;
 
 import lombok.Getter;
 import net.dashmc.plots.compatibility.compatibilities.ChunkMapSendCompatibility;
+import net.dashmc.plots.compatibility.compatibilities.HDBCompatibility;
 import net.dashmc.plots.compatibility.compatibilities.VulcanCompatibility;
 
 public enum CompatibilityMode {
 	VULCAN(new VulcanCompatibility()),
-	FORCE_CHUNKMAP_SEND(new ChunkMapSendCompatibility());
+	FORCE_CHUNKMAP_SEND(new ChunkMapSendCompatibility()),
+	HEAD_DATABASE(new HDBCompatibility());
 
 	@Getter
-	private final ICompatibility[] loaders;
+	private final CompatibilityLoader[] loaders;
 
-	CompatibilityMode(ICompatibility... loaders) {
+	CompatibilityMode(CompatibilityLoader... loaders) {
 		this.loaders = loaders;
 	}
 
 	public boolean shouldActivate() {
-		for (ICompatibility loader : loaders) {
+		for (CompatibilityLoader loader : loaders) {
 			if (loader.shouldActivate())
 				return true;
 		}
@@ -29,7 +31,7 @@ public enum CompatibilityMode {
 	}
 
 	public void activate(boolean forced) {
-		for (ICompatibility loader : loaders) {
+		for (CompatibilityLoader loader : loaders) {
 			if (forced || loader.shouldActivate())
 				loader.activate(forced);
 		}

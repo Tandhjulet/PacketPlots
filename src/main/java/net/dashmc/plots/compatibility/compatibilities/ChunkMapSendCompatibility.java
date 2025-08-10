@@ -2,9 +2,9 @@ package net.dashmc.plots.compatibility.compatibilities;
 
 import org.bukkit.Bukkit;
 
-import net.dashmc.plots.compatibility.ICompatibility;
+import net.dashmc.plots.compatibility.CompatibilityLoader;
 
-public class ChunkMapSendCompatibility implements ICompatibility {
+public class ChunkMapSendCompatibility extends CompatibilityLoader {
 
 	@Override
 	public boolean shouldActivate() {
