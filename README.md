@@ -6,7 +6,6 @@ TODO:
 -   ingen entities kan spawne i plot
 -   sounds
 -   flere blocks:
-    -   BlockSkull
     -   BlockLeaves
     -   BlockLeaves1
     -   BlockLeaves2

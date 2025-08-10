@@ -5,6 +5,8 @@ import java.util.function.BiFunction;
 
 import net.dashmc.plots.plot.blocks.VirtualBlockAir;
 import net.dashmc.plots.plot.blocks.VirtualBlockDoor;
+import net.dashmc.plots.plot.blocks.VirtualBlockLeaves1;
+import net.dashmc.plots.plot.blocks.VirtualBlockLeaves2;
 import net.dashmc.plots.plot.blocks.VirtualCarpetBlock;
 import net.dashmc.plots.plot.blocks.VirtualChestBlock;
 import net.dashmc.plots.plot.blocks.VirtualDirtBlock;
@@ -57,8 +59,12 @@ public abstract class VirtualBlock<T extends Block> {
 	public void onBlockHarvested(T block, VirtualEnvironment environment, BlockPosition pos, IBlockData data,
 			BlockBag bag,
 			TileEntity tile) {
-		bag.add(new ItemStack(Item.getItemOf(block), 1, getDropData(environment, pos)));
+		bag.add(new ItemStack(getItemType(block, data), 1, getDropData(data)));
 	};
+
+	public Item getItemType(T block, IBlockData ibd) {
+		return Item.getItemOf(block);
+	}
 
 	public int getDropData(VirtualEnvironment env, BlockPosition pos) {
 		return getDropData(env.getType(pos));
@@ -232,6 +238,8 @@ public abstract class VirtualBlock<T extends Block> {
 		new VirtualStainedGlassBlock().register();
 		new VirtualStainedGlassPaneBlock().register();
 		new VirtualSkullBlock().register();
+		new VirtualBlockLeaves1().register();
+		new VirtualBlockLeaves2().register();
 	}
 
 }

@@ -14,6 +14,7 @@ import net.dashmc.plots.events.VirtualBlockPlaceEvent;
 import net.dashmc.plots.plot.items.VirtualItemBlock;
 import net.dashmc.plots.plot.items.VirtualItemCloth;
 import net.dashmc.plots.plot.items.VirtualItemDoor;
+import net.dashmc.plots.plot.items.VirtualItemLeaves;
 import net.dashmc.plots.plot.items.VirtualItemMultiTexture;
 import net.dashmc.plots.plot.items.VirtualItemSkull;
 import net.dashmc.plots.utils.Debug;
@@ -136,6 +137,7 @@ public abstract class VirtualItem<T extends Item> {
 		new VirtualItemCloth().register();
 		new VirtualItemDoor().register();
 		new VirtualItemSkull().register();
+		new VirtualItemLeaves().register();
 	}
 
 }

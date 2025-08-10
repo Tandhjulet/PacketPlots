@@ -1,6 +1,5 @@
 package net.dashmc.plots.compatibility.compatibilities;
 
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.bukkit.Bukkit;
@@ -56,8 +55,6 @@ public class HDBCompatibility extends CompatibilityLoader implements Listener {
 				Bukkit.getLogger().warning("PreBlockBagDepositEvent called before HDB was initialized!");
 				return;
 			}
-
-			Debug.log(Arrays.toString(event.getItems()));
 
 			ItemStack[] items = event.getItems();
 			for (int i = 0; i < items.length; i++) {

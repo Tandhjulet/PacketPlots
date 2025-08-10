@@ -48,7 +48,6 @@ public class VirtualSkullBlock extends VirtualBlock<BlockSkull> {
 		return super.getCollisionBoundingBox(block, env, pos, state);
 	}
 
-	@Override
 	public int getDropData(VirtualEnvironment environment, BlockPosition blockposition) {
 		TileEntity tileentity = environment.getTileEntity(blockposition);
 
