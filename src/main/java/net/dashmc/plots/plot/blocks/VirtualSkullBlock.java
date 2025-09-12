@@ -7,8 +7,6 @@ import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.BlockSkull;
-import net.minecraft.server.v1_8_R3.EntityHuman;
-import net.minecraft.server.v1_8_R3.EnumDirection;
 import net.minecraft.server.v1_8_R3.GameProfileSerializer;
 import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.ItemStack;
@@ -18,12 +16,6 @@ import net.minecraft.server.v1_8_R3.TileEntity;
 import net.minecraft.server.v1_8_R3.TileEntitySkull;
 
 public class VirtualSkullBlock extends VirtualBlock<BlockSkull> {
-
-	@Override
-	public boolean interact(BlockSkull block, VirtualEnvironment environment, BlockPosition blockposition,
-			IBlockData iblockdata, EntityHuman entityhuman, EnumDirection enumdirection, float f, float f1, float f2) {
-		return false;
-	}
 
 	@Override
 	public void onBlockHarvested(BlockSkull block, VirtualEnvironment environment, BlockPosition pos, IBlockData data,

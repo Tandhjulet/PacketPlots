@@ -7,9 +7,12 @@ import net.dashmc.plots.plot.blocks.VirtualBlockAir;
 import net.dashmc.plots.plot.blocks.VirtualBlockDoor;
 import net.dashmc.plots.plot.blocks.VirtualBlockLeaves1;
 import net.dashmc.plots.plot.blocks.VirtualBlockLeaves2;
+import net.dashmc.plots.plot.blocks.VirtualBlockLog1;
+import net.dashmc.plots.plot.blocks.VirtualBlockLog2;
+import net.dashmc.plots.plot.blocks.VirtualBlockStone;
+import net.dashmc.plots.plot.blocks.VirtualBlockWood;
 import net.dashmc.plots.plot.blocks.VirtualCarpetBlock;
 import net.dashmc.plots.plot.blocks.VirtualChestBlock;
-import net.dashmc.plots.plot.blocks.VirtualDirtBlock;
 import net.dashmc.plots.plot.blocks.VirtualEnderChestBlock;
 import net.dashmc.plots.plot.blocks.VirtualFenceGateBlock;
 import net.dashmc.plots.plot.blocks.VirtualSkullBlock;
@@ -29,9 +32,11 @@ import net.minecraft.server.v1_8_R3.TileEntity;
 public abstract class VirtualBlock<T extends Block> {
 	private static HashMap<Class<? extends Block>, VirtualBlock<? extends Block>> virtualBlocks = new HashMap<>();
 
-	public abstract boolean interact(T block, VirtualEnvironment environment, BlockPosition blockposition,
+	public boolean interact(T block, VirtualEnvironment environment, BlockPosition blockposition,
 			IBlockData iblockdata,
-			EntityHuman entityhuman, EnumDirection enumdirection, float f, float f1, float f2);
+			EntityHuman entityhuman, EnumDirection enumdirection, float f, float f1, float f2) {
+		return false;
+	}
 
 	public void onPlace(T block, VirtualEnvironment environment, BlockPosition pos, IBlockData blockData) {
 	}
@@ -230,7 +235,6 @@ public abstract class VirtualBlock<T extends Block> {
 	static {
 		new VirtualBlockAir().register();
 		new VirtualChestBlock().register();
-		new VirtualDirtBlock().register();
 		new VirtualCarpetBlock().register();
 		new VirtualBlockDoor().register();
 		new VirtualEnderChestBlock().register();
@@ -240,6 +244,10 @@ public abstract class VirtualBlock<T extends Block> {
 		new VirtualSkullBlock().register();
 		new VirtualBlockLeaves1().register();
 		new VirtualBlockLeaves2().register();
+		new VirtualBlockLog1().register();
+		new VirtualBlockLog2().register();
+		new VirtualBlockWood().register();
+		new VirtualBlockStone().register();
 	}
 
 }
