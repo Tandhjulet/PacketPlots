@@ -45,7 +45,7 @@ public class VirtualBlockDoor extends VirtualBlock<BlockDoor> {
 		door = door.a(BlockDoor.OPEN);
 		environment.setBlock(lower, door, 2);
 
-		int eventCode = ((Boolean) iblockdata.get(BlockDoor.OPEN)).booleanValue() ? 1003 : 1006;
+		int eventCode = iblockdata.get(BlockDoor.OPEN).booleanValue() ? 1003 : 1006;
 		environment.broadcastPacket(new PacketPlayOutWorldEvent(eventCode, pos, 0, false));
 		return true;
 	}
