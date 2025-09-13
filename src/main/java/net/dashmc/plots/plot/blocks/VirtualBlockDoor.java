@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import net.dashmc.plots.plot.BlockBag;
 import net.dashmc.plots.plot.VirtualBlock;
 import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.utils.Debug;
 import net.dashmc.plots.utils.MethodWrapper;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import net.minecraft.server.v1_8_R3.BlockDoor;
@@ -33,6 +34,8 @@ public class VirtualBlockDoor extends VirtualBlock<BlockDoor> {
 	@Override
 	public boolean interact(BlockDoor block, VirtualEnvironment environment, BlockPosition pos,
 			IBlockData iblockdata, EntityHuman entityhuman, EnumDirection enumdirection, float f, float f1, float f2) {
+		Debug.log("interact recorded");
+
 		if (block.getMaterial() == Material.ORE)
 			return true;
 

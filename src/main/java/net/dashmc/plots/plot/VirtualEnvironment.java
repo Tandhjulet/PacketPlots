@@ -453,10 +453,13 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 	public class InteractManager {
 		public boolean interact(EntityHuman human, VirtualEnvironment env, ItemStack item, BlockPosition pos,
 				EnumDirection dir, float cX, float cY, float cZ, boolean isBorderPlace) {
-			if (!env.getOwnerUuid().equals(human.getUniqueID()))
-				return false;
-
 			IBlockData blockData = isBorderPlace ? nmsWorld.getType(pos) : env.getType(pos);
+
+			if (!env.getOwnerUuid().equals(human.getUniqueID())) {
+				handleGateMismatch(blockData, human, pos, env);
+				return false;
+			}
+
 			boolean result = false;
 
 			Debug.log("Interact position: " + pos.toString() + " (dir " + dir.toString() + ")");
@@ -484,12 +487,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 				Bukkit.getPluginManager().callEvent(ev);
 
 				if (ev.getUseClickedBlock() == Event.Result.DENY) {
-					if (blockData.getBlock() instanceof BlockDoor) {
-						boolean bottom = blockData.get(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.LOWER;
-						((EntityPlayer) human).playerConnection
-								.sendPacket(
-										new VirtualBlockChangePacket(env, bottom ? pos.up() : pos.down()).getPacket());
-					}
+					handleGateMismatch(blockData, human, pos, env);
 					result = ev.getUseItemInHand() != Event.Result.ALLOW;
 				} else if (gameMode == GameMode.SPECTATOR) {
 					// TODO: implement
@@ -516,6 +514,20 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 			}
 
 			return result;
+		}
+
+		private void handleGateMismatch(IBlockData ibd, EntityHuman entity, BlockPosition pos, VirtualEnvironment env) {
+			EntityPlayer player = (EntityPlayer) entity;
+
+			if (ibd.getBlock() instanceof BlockDoor) {
+				boolean bottom = ibd.get(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.LOWER;
+
+				player.playerConnection.sendPacket(new VirtualBlockChangePacket(env, pos).getPacket());
+				player.playerConnection
+						.sendPacket(new VirtualBlockChangePacket(env, bottom ? pos.up() : pos.down()).getPacket());
+			} else if (ibd.getBlock() == Blocks.TRAPDOOR) {
+				player.playerConnection.sendPacket(new VirtualBlockChangePacket(env, pos).getPacket());
+			}
 		}
 
 		// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L105
