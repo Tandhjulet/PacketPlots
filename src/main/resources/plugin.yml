@@ -8,6 +8,7 @@ authors:
 
 softdepend:
   - Vulcan
+  - NoCheatPlus
   - packetevents
   - HeadDatabase
 

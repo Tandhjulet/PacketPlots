@@ -3,6 +3,7 @@ package net.dashmc.plots.plot;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
@@ -16,6 +17,7 @@ import lombok.Setter;
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.compatibility.CompatibilityMode;
 import net.dashmc.plots.compatibility.PluginCompatibility;
+import net.dashmc.plots.events.EnvironmentEnterExit;
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
@@ -61,6 +63,16 @@ public class VirtualConnection {
 	private EntityPlayer player;
 	private VirtualEnvironment environment;
 	private VirtualEnvironment original;
+	private boolean insideEnvironment;
+
+	public void setInsideEnvironment(boolean to) {
+		if (to == insideEnvironment)
+			return;
+
+		boolean isEntering = to == true && insideEnvironment == false;
+		EnvironmentEnterExit event = new EnvironmentEnterExit(this, isEntering);
+		Bukkit.getPluginManager().callEvent(event);
+	}
 
 	@Setter
 	private boolean isVisiting = false;

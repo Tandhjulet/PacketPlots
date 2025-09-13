@@ -35,12 +35,15 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 			return true;
 		}
 
-		if (!connection.getEnvironment().isValidLocation((int) x, (int) y, (int) z))
+		if (!connection.getEnvironment().isValidLocation((int) x, (int) y, (int) z)) {
+			connection.setInsideEnvironment(false);
 			return false;
-		else if (!connection.isMoved()) {
+		} else if (!connection.isMoved()) {
 			connection.setMoved(true);
 			return false;
 		}
+
+		connection.setInsideEnvironment(true);
 
 		EntityPlayer player = connection.getPlayer();
 		CraftPlayer bukkitPlayer = player.getBukkitEntity();
