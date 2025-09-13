@@ -104,7 +104,6 @@ public class VulcanCompatibility extends CompatibilityLoader {
 			if (!PacketPlots.getPlotConfig().getRegion().includesWithBuffer(playerLocation))
 				return;
 
-			Debug.log("cancelled vulcan flag due to being in virtualized region (checked w/ buffer)!");
 			ev.setCancelled(true);
 		}
 

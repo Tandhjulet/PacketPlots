@@ -25,7 +25,7 @@ public class BackdropRemoverTransformer implements IRenderTransformer {
 				if (blockIds[sectionPointer] != blockId)
 					continue;
 
-				// Debug.log("setting pos to 0");
+				//
 				chunkMap.a[mapPointer] = 0;
 				chunkMap.a[mapPointer + 1] = 0;
 			}

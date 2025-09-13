@@ -48,7 +48,6 @@ public class BlockPlacementPacketInterceptor extends PacketInterceptor<PacketPla
 			// above build limit
 			return true;
 		} else {
-			Debug.log("Inside packet modifier interact handler");
 
 			Location eyeLoc = player.getBukkitEntity().getEyeLocation();
 			double reachDist = NumberConversions.square(eyeLoc.getX() - pos.getX())

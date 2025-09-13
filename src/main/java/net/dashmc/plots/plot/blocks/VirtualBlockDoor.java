@@ -34,7 +34,6 @@ public class VirtualBlockDoor extends VirtualBlock<BlockDoor> {
 	@Override
 	public boolean interact(BlockDoor block, VirtualEnvironment environment, BlockPosition pos,
 			IBlockData iblockdata, EntityHuman entityhuman, EnumDirection enumdirection, float f, float f1, float f2) {
-		Debug.log("interact recorded");
 
 		if (block.getMaterial() == Material.ORE)
 			return true;

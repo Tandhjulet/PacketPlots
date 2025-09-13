@@ -29,7 +29,6 @@ public class VirtualSkullBlock extends VirtualBlock<BlockSkull> {
 			skullItem.getTag().set("SkullOwner", compound);
 		}
 
-		Debug.log("giving " + skullItem + " to player!");
 		bag.add(skullItem);
 	}
 

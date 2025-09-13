@@ -40,7 +40,7 @@ public class HDBCompatibility extends CompatibilityLoader implements Listener {
 
 	@EventHandler
 	public void onDatabaseLoad(DatabaseLoadEvent event) {
-		Debug.log("HDB loaded! Setting api...");
+
 		api.set(new HeadDatabaseAPI());
 	}
 

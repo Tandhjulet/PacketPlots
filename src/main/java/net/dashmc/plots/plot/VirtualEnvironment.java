@@ -462,7 +462,6 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 
 			boolean result = false;
 
-			Debug.log("Interact position: " + pos.toString() + " (dir " + dir.toString() + ")");
 			Debug.log("Interact IBD:" + blockData.getBlock().toString());
 			Debug.log("Block is not air?: " + (blockData.getBlock() != Blocks.AIR));
 
@@ -501,8 +500,6 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 				if (item != null && !result) {
 					int data = item.getData();
 					int count = item.count;
-
-					Debug.log("Placing item " + item.getItem().getName() + " (" + item.getItem().getClass() + ")");
 
 					result = VirtualItem.placeItem(item, human, env, pos, dir, cX, cY, cZ, isBorderPlace);
 
@@ -577,8 +574,6 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 
 			float f = 1f;
 
-			Debug.log("Setting last dig tick");
-
 			if (event.getUseClickedBlock() == Event.Result.DENY) {
 
 				IBlockData data = getType(pos);
@@ -610,7 +605,6 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 					player.getBukkitEntity(), player.getBukkitEntity().getItemInHand(), f >= 1.0f,
 					VirtualEnvironment.this);
 			if (blockEvent.isCancelled()) {
-				Debug.log("Event has gotten cancelled");
 
 				player.playerConnection
 						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
@@ -621,7 +615,6 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 				f = 2.0f;
 
 			if (block.getMaterial() != Material.AIR && f >= 1.0f) {
-				Debug.log("Insta-breaking block");
 
 				breakBlock(player, pos);
 			} else { // https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L190
@@ -651,7 +644,6 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 				Block block = getType(pos).getBlock();
 				if (block.getMaterial() != Material.AIR) {
 					float f = block.getDamage(player, nmsWorld, pos) * (float) (diggingFor + 1);
-					Debug.log("Trying to break block, force: " + f + " >= 0.7");
 
 					if (f >= 0.7F) {
 						interactManager.setIsDestroying(false);
@@ -672,8 +664,6 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 			VirtualPlayerInteractManager interactManager = (VirtualPlayerInteractManager) player.playerInteractManager;
 			interactManager.setIsDestroying(false);
 
-			Debug.log("abort destroy");
-
 			BlockPosition pos = interactManager.getDestroyPosition();
 			broadcastPacket(new PacketPlayOutBlockBreakAnimation(player.getId(), pos, -1));
 			return;
@@ -691,7 +681,6 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 				packet.block = Blocks.AIR.getBlockData();
 				player.playerConnection.sendPacket(packet);
 
-				Debug.log("is not tile && is not sword, player is creative. sending break packet.");
 			}
 
 			ev = new VirtualBlockBreakEvent(Utils.convertPosToLoc(world, pos), VirtualEnvironment.this);
@@ -729,8 +718,6 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 			if (nmsBlock == Blocks.AIR)
 				return false;
 
-			Debug.log("block is not air");
-
 			if (nmsBlock == Blocks.SKULL && !player.playerInteractManager.isCreative()) {
 				VirtualBlock.harvestBlock(nmsBlock, nmsData, VirtualEnvironment.this, pos,
 						BlockBag.getBlockBag(player), tile);
@@ -753,7 +740,6 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 			broadcastPacket(new PacketPlayOutWorldEvent(2001, pos, Block.getCombinedId(nmsData), false));
 
 			boolean couldSet = setBlock(pos, Blocks.AIR.getBlockData(), 3);
-			Debug.log("tried setting block server-side at " + pos.toString() + " to air");
 
 			if (player.playerInteractManager.isCreative())
 				player.playerConnection

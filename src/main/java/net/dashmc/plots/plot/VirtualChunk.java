@@ -205,7 +205,7 @@ public class VirtualChunk implements IDataHolder {
 		if (cps.isChunkLoaded(coordPair.x, coordPair.z)) {
 			this.chunk = world.getChunkAt(coordPair.x, coordPair.z);
 		} else {
-			Debug.log("Chunk is not loaded! Forcing load...");
+
 			this.chunk = cps.getChunkAt(coordPair.x, coordPair.z);
 		}
 

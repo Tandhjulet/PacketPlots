@@ -29,7 +29,6 @@ public class WindowClosePacketInterceptor extends PacketInterceptor<PacketPlayIn
 
 	@Override
 	public boolean intercept(PacketPlayInCloseWindow packet, VirtualConnection connection) {
-		Debug.log("window close packet!");
 
 		VirtualEnvironment environment = connection.getEnvironment();
 		EntityPlayer player = connection.getPlayer();
@@ -41,8 +40,6 @@ public class WindowClosePacketInterceptor extends PacketInterceptor<PacketPlayIn
 		ContainerChest chest = (ContainerChest) player.activeContainer;
 		if (isCustomInventory(chest.e()))
 			return false;
-
-		Debug.log("packet will be intercepted.");
 
 		CraftEventFactory.handleInventoryCloseEvent(player);
 

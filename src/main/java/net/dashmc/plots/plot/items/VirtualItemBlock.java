@@ -21,7 +21,6 @@ public class VirtualItemBlock extends VirtualItem<ItemBlock> {
 			EnumDirection direction, float cX, float cY, float cZ, boolean isBorderPlace) {
 		IBlockData ibd = isBorderPlace ? environment.getNmsWorld().getType(pos) : environment.getType(pos);
 		Block block = ibd.getBlock();
-		Debug.log("Is border place? " + isBorderPlace + " @ " + pos.toString() + " (" + block.toString() + ")");
 
 		if (!VirtualBlock.shouldRemainAt(block, environment, pos))
 			pos = pos.shift(direction);
@@ -34,17 +33,12 @@ public class VirtualItemBlock extends VirtualItem<ItemBlock> {
 
 		if (item.count == 0)
 			return false;
-		Debug.log("Item count > 0");
 
 		if (!environment.canPlace(pos, direction, item, player))
 			return false;
 
-		Debug.log("Can place!");
-
 		if (!environment.isBuildable(toPlace, pos, false, direction, player, item))
 			return false;
-
-		Debug.log("Is buildable!");
 
 		int data = item.getItem().filterData(item.getData());
 		IBlockData placedBlockData = toPlace.getPlacedState(null, pos, direction, cX, cY, cZ, data, player);

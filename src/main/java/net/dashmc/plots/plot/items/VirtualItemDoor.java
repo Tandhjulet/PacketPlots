@@ -43,8 +43,6 @@ public class VirtualItemDoor extends VirtualItem<ItemDoor> {
 			throw new RuntimeException(e);
 		}
 
-		Debug.log("can place");
-
 		if (!environment.isBuildable(toPlace, pos, false, direction, player, item))
 			return false;
 
