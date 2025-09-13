@@ -5,12 +5,17 @@ import java.util.function.BiFunction;
 
 import net.dashmc.plots.plot.blocks.VirtualBlockAir;
 import net.dashmc.plots.plot.blocks.VirtualBlockDoor;
+import net.dashmc.plots.plot.blocks.VirtualBlockDoubleStep;
+import net.dashmc.plots.plot.blocks.VirtualBlockGrass;
 import net.dashmc.plots.plot.blocks.VirtualBlockLeaves1;
 import net.dashmc.plots.plot.blocks.VirtualBlockLeaves2;
 import net.dashmc.plots.plot.blocks.VirtualBlockLog1;
 import net.dashmc.plots.plot.blocks.VirtualBlockLog2;
+import net.dashmc.plots.plot.blocks.VirtualBlockStep;
 import net.dashmc.plots.plot.blocks.VirtualBlockStone;
+import net.dashmc.plots.plot.blocks.VirtualBlockTrapDoor;
 import net.dashmc.plots.plot.blocks.VirtualBlockWood;
+import net.dashmc.plots.plot.blocks.VirtualBlockWoodStep;
 import net.dashmc.plots.plot.blocks.VirtualCarpetBlock;
 import net.dashmc.plots.plot.blocks.VirtualChestBlock;
 import net.dashmc.plots.plot.blocks.VirtualEnderChestBlock;
@@ -33,8 +38,7 @@ public abstract class VirtualBlock<T extends Block> {
 	private static HashMap<Class<? extends Block>, VirtualBlock<? extends Block>> virtualBlocks = new HashMap<>();
 
 	public boolean interact(T block, VirtualEnvironment environment, BlockPosition blockposition,
-			IBlockData iblockdata,
-			EntityHuman entityhuman, EnumDirection enumdirection, float f, float f1, float f2) {
+			IBlockData iblockdata, EntityHuman entityhuman, EnumDirection enumdirection, float f, float f1, float f2) {
 		return false;
 	}
 
@@ -248,6 +252,11 @@ public abstract class VirtualBlock<T extends Block> {
 		new VirtualBlockLog2().register();
 		new VirtualBlockWood().register();
 		new VirtualBlockStone().register();
+		new VirtualBlockWoodStep().register();
+		new VirtualBlockStep().register();
+		new VirtualBlockDoubleStep().register();
+		new VirtualBlockGrass().register();
+		new VirtualBlockTrapDoor().register();
 	}
 
 }

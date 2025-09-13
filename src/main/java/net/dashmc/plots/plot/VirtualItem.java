@@ -11,12 +11,14 @@ import org.bukkit.entity.Player;
 
 import lombok.Getter;
 import net.dashmc.plots.events.VirtualBlockPlaceEvent;
+import net.dashmc.plots.plot.items.VirtualItemAUX;
 import net.dashmc.plots.plot.items.VirtualItemBlock;
 import net.dashmc.plots.plot.items.VirtualItemCloth;
 import net.dashmc.plots.plot.items.VirtualItemDoor;
 import net.dashmc.plots.plot.items.VirtualItemLeaves;
 import net.dashmc.plots.plot.items.VirtualItemMultiTexture;
 import net.dashmc.plots.plot.items.VirtualItemSkull;
+import net.dashmc.plots.plot.items.VirtualItemStep;
 import net.dashmc.plots.utils.Debug;
 import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.Block;
@@ -138,6 +140,8 @@ public abstract class VirtualItem<T extends Item> {
 		new VirtualItemDoor().register();
 		new VirtualItemSkull().register();
 		new VirtualItemLeaves().register();
+		new VirtualItemStep().register();
+		new VirtualItemAUX().register();
 	}
 
 }
