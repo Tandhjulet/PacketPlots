@@ -14,7 +14,6 @@ import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.compatibility.CompatibilityLoader;
 import net.dashmc.plots.events.PreBlockBagDepositEvent;
-import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.ItemStack;
 import net.minecraft.server.v1_8_R3.Items;
 

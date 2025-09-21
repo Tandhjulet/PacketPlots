@@ -31,7 +31,6 @@ public class VulcanCompatibility extends CompatibilityLoader {
 		updateVulcanConfig();
 
 		Bukkit.getPluginManager().registerEvents(new VulcanFlagListener(), PacketPlots.getInstance());
-
 	}
 
 	private void updateVulcanConfig() {
