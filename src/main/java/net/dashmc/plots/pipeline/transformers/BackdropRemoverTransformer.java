@@ -14,7 +14,11 @@ public class BackdropRemoverTransformer implements IRenderTransformer {
 			if ((chunkMap.b & (1 << i)) == 0)
 				continue;
 			if ((virtualChunk.getSectionMask() & (1 << i)) == 0) {
-				mapPointer += 4096 * 2;
+				final int newPointer = mapPointer + 4096 * 2;
+				for (; mapPointer < newPointer; mapPointer++) {
+					chunkMap.a[mapPointer] = 0;
+				}
+
 				continue;
 			}
 
@@ -25,7 +29,6 @@ public class BackdropRemoverTransformer implements IRenderTransformer {
 				if (blockIds[sectionPointer] != blockId)
 					continue;
 
-				//
 				chunkMap.a[mapPointer] = 0;
 				chunkMap.a[mapPointer + 1] = 0;
 			}

@@ -41,6 +41,7 @@ public class Paster {
 		int metaStartIdx = nonEmptyChunkSections * 2 * 16 * 16 * 16 + nonEmptyChunkSections * 16 * 16 * 8;
 
 		int idPointer = 0;
+		int sectionIndex = 0;
 
 		char[] blockIds = new char[4096];
 		for (int i = 0; i < metaStartIdx; i += 2) {
@@ -48,13 +49,22 @@ public class Paster {
 			blockIds[idPointer++] = blockId;
 
 			if (idPointer == 4096) {
-				idPointer = 0;
-				int chunkY = (((i >> 1) >> 8) & 0xFF) >> 4;
+				for (; sectionIndex < 16; sectionIndex++) {
+					if ((map.b & (1 << sectionIndex)) == 0)
+						continue;
+					break;
+				}
+				if (sectionIndex == 16)
+					break;
+
+				int chunkY = sectionIndex++;
 
 				ChunkSection section = new ChunkSection(chunkY << 4, true, blockIds);
 				nmsChunk.getSections()[chunkY] = section;
 
 				blockIds = new char[4096];
+
+				idPointer = 0;
 			}
 		}
 
