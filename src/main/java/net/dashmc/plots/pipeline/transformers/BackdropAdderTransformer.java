@@ -13,12 +13,11 @@ import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 @AllArgsConstructor
 public class BackdropAdderTransformer implements IRenderTransformer {
 	private final Chunk backdropChunk;
-	private boolean includeVirtualizedRegion = false;
+	private CuboidRegion toExclude;
 
 	@Override
 	public void accept(VirtualChunk virtualChunk, ChunkMap chunkMap, Integer metaStartIdx) {
 		int mapPointer = 0;
-		CuboidRegion region = virtualChunk.getEnvironment().getRegion();
 
 		for (int i = 0; i < 16; i++) {
 			ChunkSection section = backdropChunk.getSections()[i];
@@ -35,14 +34,20 @@ public class BackdropAdderTransformer implements IRenderTransformer {
 				if (blockId != (char) 0)
 					continue;
 
-				if (!includeVirtualizedRegion) {
+				if (toExclude != null) {
 					int shortIdx = mapPointer >> 1;
+
+					// dont apply the offset here as the region isnt offset!
 					int x = (shortIdx & 0xF) + (virtualChunk.getCoordPair().x << 4);
-					int y = (shortIdx >> 8) & 0xFF;
+					int y = ((shortIdx >> 8) & 0xF) + (i << 4);
 					int z = ((shortIdx >> 4) & 0xF) + (virtualChunk.getCoordPair().z << 4);
 
-					if (region.includes(x, y, z))
+					boolean includes = toExclude.includes(x, y, z);
+					if (includes) {
+						chunkMap.a[mapPointer] = 0;
+						chunkMap.a[mapPointer + 1] = 0;
 						continue;
+					}
 				}
 
 				char newBlock = blockIds[sectionPointer];
