@@ -6,6 +6,7 @@ import net.dashmc.plots.pipeline.IRenderTransformer;
 import net.dashmc.plots.plot.VirtualChunk;
 import net.dashmc.plots.utils.CuboidRegion;
 import net.minecraft.server.v1_8_R3.Chunk;
+import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.ChunkSection;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 
@@ -13,11 +14,12 @@ import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 @AllArgsConstructor
 public class BackdropAdderTransformer implements IRenderTransformer {
 	private final Chunk backdropChunk;
-	private CuboidRegion toExclude;
+	private CuboidRegion toExclude = null;
 
 	@Override
 	public void accept(VirtualChunk virtualChunk, ChunkMap chunkMap, Integer metaStartIdx) {
 		int mapPointer = 0;
+		ChunkCoordIntPair backdropXZ = backdropChunk.j();
 
 		for (int i = 0; i < 16; i++) {
 			ChunkSection section = backdropChunk.getSections()[i];
@@ -30,25 +32,22 @@ public class BackdropAdderTransformer implements IRenderTransformer {
 
 			char[] blockIds = section.getIdArray();
 			for (int sectionPointer = 0; sectionPointer < blockIds.length; sectionPointer++, mapPointer += 2) {
-				char blockId = (char) ((chunkMap.a[mapPointer] & 0xFF) | ((chunkMap.a[mapPointer + 1] & 0xFF) << 8));
-				if (blockId != (char) 0)
-					continue;
-
 				if (toExclude != null) {
 					int shortIdx = mapPointer >> 1;
 
 					// dont apply the offset here as the region isnt offset!
-					int x = (shortIdx & 0xF) + (virtualChunk.getCoordPair().x << 4);
+					int x = (shortIdx & 0xF) + (backdropXZ.x << 4);
 					int y = ((shortIdx >> 8) & 0xF) + (i << 4);
-					int z = ((shortIdx >> 4) & 0xF) + (virtualChunk.getCoordPair().z << 4);
+					int z = ((shortIdx >> 4) & 0xF) + (backdropXZ.z << 4);
 
 					boolean includes = toExclude.includes(x, y, z);
-					if (includes) {
-						chunkMap.a[mapPointer] = 0;
-						chunkMap.a[mapPointer + 1] = 0;
+					if (includes)
 						continue;
-					}
 				}
+
+				char blockId = (char) ((chunkMap.a[mapPointer] & 0xFF) | ((chunkMap.a[mapPointer + 1] & 0xFF) << 8));
+				if (blockId != (char) 0)
+					continue;
 
 				char newBlock = blockIds[sectionPointer];
 				chunkMap.a[mapPointer] = (byte) (newBlock & 255);
