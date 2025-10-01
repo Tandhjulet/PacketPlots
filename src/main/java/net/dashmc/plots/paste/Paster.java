@@ -1,6 +1,7 @@
 package net.dashmc.plots.paste;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 
 import net.dashmc.plots.pipeline.RenderPipeline;
 import net.dashmc.plots.plot.VirtualChunk;
@@ -10,11 +11,14 @@ import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.Chunk;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.ChunkSection;
+import net.minecraft.server.v1_8_R3.NibbleArray;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 import net.minecraft.server.v1_8_R3.WorldServer;
 
 public class Paster {
+	private static final NibbleArray fullyLit;
+
 	public static boolean paste(VirtualChunk chunk, RenderPipeline pipeline, ChunkCoordIntPair at) {
 		int atChunkX = at.x, atChunkZ = at.z;
 
@@ -59,8 +63,11 @@ public class Paster {
 
 				int chunkY = sectionIndex++;
 
-				ChunkSection section = new ChunkSection(chunkY << 4, true, blockIds);
+				ChunkSection section = new ChunkSection(chunkY << 4, false, blockIds);
 				nmsChunk.getSections()[chunkY] = section;
+
+				section.a(fullyLit);
+				section.b(fullyLit);
 
 				blockIds = new char[4096];
 
@@ -71,6 +78,12 @@ public class Paster {
 		nmsChunk.initLighting();
 
 		return true;
+	}
 
+	static {
+		byte[] arr = new byte[2048];
+		Arrays.fill(arr, (byte) 255);
+
+		fullyLit = new NibbleArray(arr);
 	}
 }

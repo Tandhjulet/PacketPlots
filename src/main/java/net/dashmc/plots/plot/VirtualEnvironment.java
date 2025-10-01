@@ -264,6 +264,12 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 			File dataFile = new File(DATA_DIRECTORY, getOwnerUuid() + ".dat");
 			FileOutputStream fileOutputStream = new FileOutputStream(dataFile);
 			DataOutputStream dataOutputStream = new DataOutputStream(fileOutputStream);
+			String version = PacketPlots.getInstance().getDescription().getVersion();
+
+			dataOutputStream.writeInt(version.length());
+			for (char versionCodeChar : version.toCharArray())
+				dataOutputStream.writeChar(versionCodeChar);
+
 			serialize(dataOutputStream);
 
 			fileOutputStream.close();
@@ -274,6 +280,20 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 	}
 
 	public VirtualEnvironment(DataInputStream stream) throws IOException {
+		StringBuilder versionCode = new StringBuilder();
+		int versionLength = stream.readInt();
+		for (int i = 0; i < versionLength; i++)
+			versionCode.append(stream.readChar());
+
+		String generatedWith = versionCode.toString();
+		String currentVer = PacketPlots.getInstance().getDescription().getVersion();
+		if (!generatedWith.equalsIgnoreCase(currentVer)) {
+			// TODO: apply some sort of migration or different loading style
+
+			Bukkit.getLogger().warning("[PacketPlots] Save file differs in versions! Trying to load anyway... ("
+					+ generatedWith + " -> " + currentVer + ")");
+		}
+
 		deserialize(stream);
 
 		Player owner = getOwner();

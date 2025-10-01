@@ -36,20 +36,11 @@ import net.minecraft.server.v1_8_R3.World;
 import net.minecraft.server.v1_8_R3.WorldServer;
 import net.minecraft.server.v1_8_R3.Chunk.EnumTileEntityState;
 
-/*
- * Data structure:
- * int xCoord
- * int zCoord
- * 
- * char section bit mask
- * array of sections
- */
 public class VirtualChunk implements IDataHolder {
 	private static Field xCoordField;
 	private static Field zCoordField;
 	private static Field chunkMapField;
 
-	private static byte[][] lightArrays = new byte[16][];
 	private static Field nonEmptyBlockCountField;
 
 	private @Getter ChunkCoordIntPair coordPair;
@@ -295,17 +286,20 @@ public class VirtualChunk implements IDataHolder {
 		return getBlockData(pos).getBlock();
 	}
 
-	public IBlockData getBlockData(BlockPosition pos) {
-		if (pos.getY() >= 0 && pos.getY() >> 4 < this.sections.length) {
-			Section section = sections[pos.getY() >> 4];
-			if (section != null) {
-				byte x = (byte) (pos.getX() & 15);
-				byte y = (byte) (pos.getY() & 15);
-				byte z = (byte) (pos.getZ() & 15);
-				return section.getType(x, y, z);
-			}
+	public IBlockData getBlockData(byte x, int y, byte z) {
+		if (y >= 0 && y >> 4 < this.sections.length) {
+			Section section = sections[y >> 4];
+			if (section != null)
+				return section.getType(x, (byte) (y & 15), z);
 		}
 		return Blocks.AIR.getBlockData();
+	}
+
+	public IBlockData getBlockData(BlockPosition pos) {
+		byte x = (byte) (pos.getX() & 15);
+		byte z = (byte) (pos.getZ() & 15);
+
+		return getBlockData(x, pos.getY(), z);
 	}
 
 	/*
@@ -411,12 +405,6 @@ public class VirtualChunk implements IDataHolder {
 
 		} catch (NoSuchFieldException | SecurityException e) {
 			e.printStackTrace();
-		}
-
-		for (int i = 0; i < lightArrays.length; i++) {
-			int lightArrayLength = i * 16 * 16 * 8;
-			lightArrays[i] = new byte[lightArrayLength];
-			Arrays.fill(lightArrays[i], (byte) 255);
 		}
 	}
 }
