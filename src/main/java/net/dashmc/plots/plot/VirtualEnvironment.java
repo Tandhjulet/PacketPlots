@@ -115,6 +115,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		if (dataFile.exists()) {
 			FileInputStream fileInputStream = new FileInputStream(dataFile);
 			DataInputStream dataInputStream = new DataInputStream(fileInputStream);
+			readVersionCode(dataInputStream);
 
 			UUID prevUuid = player.getUniqueId();
 			deserialize(dataInputStream);
@@ -250,7 +251,10 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 			if (conn.getOriginal() == this)
 				continue;
 
-			conn.visit(conn.getOriginal());
+			// we visit locally here to prevent concurrent modification.
+			// it doesnt matter anyway, as the connections are cleared after anyway!
+			VirtualEnvironment newEnv = conn.visitLocally(conn.getOriginal());
+			newEnv.getConnections().add(conn);
 		}
 
 		connections.clear();
@@ -280,6 +284,19 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 	}
 
 	public VirtualEnvironment(DataInputStream stream) throws IOException {
+		readVersionCode(stream);
+		deserialize(stream);
+
+		Player owner = getOwner();
+		EntityPlayer nmsOwner = ((CraftPlayer) owner).getHandle();
+		if (owner == null || !owner.isOnline())
+			throw new IOException("Tried initialization of VirtualEnvironment for offline player: " + ownerUuid);
+		virtualEnvironments.put(owner, this);
+
+		startVirtualization(nmsOwner);
+	}
+
+	private String readVersionCode(DataInputStream stream) throws IOException {
 		StringBuilder versionCode = new StringBuilder();
 		int versionLength = stream.readInt();
 		for (int i = 0; i < versionLength; i++)
@@ -294,15 +311,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 					+ generatedWith + " -> " + currentVer + ")");
 		}
 
-		deserialize(stream);
-
-		Player owner = getOwner();
-		EntityPlayer nmsOwner = ((CraftPlayer) owner).getHandle();
-		if (owner == null || !owner.isOnline())
-			throw new IOException("Tried initialization of VirtualEnvironment for offline player: " + ownerUuid);
-		virtualEnvironments.put(owner, this);
-
-		startVirtualization(nmsOwner);
+		return generatedWith;
 	}
 
 	public void stopVirtualization(EntityPlayer player) {

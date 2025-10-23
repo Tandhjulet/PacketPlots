@@ -17,6 +17,7 @@ import lombok.Setter;
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.compatibility.CompatibilityMode;
 import net.dashmc.plots.compatibility.PluginCompatibility;
+import net.dashmc.plots.events.ACRegionEnterExit;
 import net.dashmc.plots.events.EnvironmentEnterExit;
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.utils.Debug;
@@ -64,6 +65,16 @@ public class VirtualConnection {
 	private VirtualEnvironment environment;
 	private VirtualEnvironment original;
 	private boolean insideEnvironment;
+	private boolean insideACRegion;
+
+	public void setInsideACRegion(boolean to) {
+		if (to == insideACRegion)
+			return;
+
+		boolean isEntering = to == true && insideACRegion == false;
+		ACRegionEnterExit event = new ACRegionEnterExit(this, isEntering);
+		Bukkit.getPluginManager().callEvent(event);
+	}
 
 	public void setInsideEnvironment(boolean to) {
 		if (to == insideEnvironment)
@@ -77,20 +88,34 @@ public class VirtualConnection {
 	@Setter
 	private boolean isVisiting = false;
 
-	public void visit(VirtualEnvironment other) {
+	/**
+	 * Internal method that doesnt touch the environments. this is to prevent a
+	 * ConcurrentModificationException when e.g. closing a virtual environment.
+	 * 
+	 * @param other
+	 * @return the new environment, if any.
+	 */
+	protected VirtualEnvironment visitLocally(VirtualEnvironment other) {
 		if (other.equals(environment))
-			return;
+			return null;
 
 		setVisiting(!other.equals(original));
-		environment.getConnections().remove(this);
-		other.getConnections().add(this);
-
 		Location safeLocation = PacketPlots.getPlotConfig().getSafeLocation();
 		Debug.log("teleporting player to " + safeLocation);
 		player.getBukkitEntity().teleport(safeLocation);
 
 		this.environment = other;
 		refreshVirtualizedChunks();
+		return other;
+	}
+
+	public void visit(VirtualEnvironment other) {
+		if (other.equals(environment))
+			return;
+
+		environment.getConnections().remove(this);
+		other.getConnections().add(this);
+		visitLocally(other);
 	}
 
 	public static PacketPlayOutMapChunk getRenderPacket(int chunkX, int chunkZ, ChunkMap chunkMap) {

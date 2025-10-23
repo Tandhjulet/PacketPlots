@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
@@ -29,18 +28,22 @@ import net.minecraft.server.v1_8_R3.NBTTagCompound;
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public class BlockBag implements IDataHolder {
-	private static final HashMap<UUID, BlockBag> blockBags = new HashMap<>();
+	private static final HashMap<EntityPlayer, BlockBag> blockBags = new HashMap<>();
 
 	public static BlockBag getBlockBag(EntityPlayer player) {
-		return blockBags.computeIfAbsent(player.getUniqueID(), uuid -> new BlockBag(player));
+		return blockBags.computeIfAbsent(player, uuid -> new BlockBag(player));
 	}
 
 	public static BlockBag getBlockBag(Player player) {
 		return getBlockBag(((CraftPlayer) player).getHandle());
 	}
 
-	public static void removeBlockBag(UUID uuid) {
-		blockBags.remove(uuid);
+	public static void removeBlockBag(Player player) {
+		blockBags.remove(((CraftPlayer) player).getHandle());
+	}
+
+	public static void removeBlockBag(EntityPlayer player) {
+		blockBags.remove(player);
 	}
 
 	public static BlockBag deserialize(DataInputStream inputStream, EntityPlayer player) throws IOException {

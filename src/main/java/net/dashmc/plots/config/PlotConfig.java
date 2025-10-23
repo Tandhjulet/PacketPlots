@@ -21,6 +21,23 @@ public class PlotConfig extends OkaeriConfig {
 	@Comment("The virtualized region")
 	CuboidRegion region;
 
+	@Comment({
+			"The region in which to disable any anti cheats.",
+			"As this plugin is purely packed-based, anticheats",
+			"will almost always false-flag players operating inside",
+			"the virtualized region. When checking if the player is inside",
+			"of this region, we use a 1-block buffer."
+	})
+	CuboidRegion antiCheatDisabledRegion;
+
+	public CuboidRegion getDefaultedACRegion() {
+		if (this.antiCheatDisabledRegion == null) {
+			return region;
+		}
+
+		return antiCheatDisabledRegion;
+	}
+
 	public class ChunkConfig extends OkaeriConfig {
 		public ChunkCoordIntPair coords;
 		public ArrayList<Integer> sections = new ArrayList<>();

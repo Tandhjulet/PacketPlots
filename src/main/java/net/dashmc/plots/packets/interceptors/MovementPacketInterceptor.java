@@ -7,9 +7,11 @@ import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.util.NumberConversions;
 
+import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.events.VirtualPlayerMoveEvent;
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.VirtualConnection;
+import net.dashmc.plots.utils.CuboidRegion;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.PacketPlayInFlying;
 import net.minecraft.server.v1_8_R3.PacketPlayOutPosition;
@@ -20,6 +22,7 @@ import net.minecraft.server.v1_8_R3.PacketPlayInFlying.PacketPlayInPositionLook;
 
 public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFlying> {
 	protected static MovementPacketInterceptor INSTANCE;
+	private static CuboidRegion acDisabledRegion = PacketPlots.getPlotConfig().getDefaultedACRegion();
 
 	@Override
 	public boolean intercept(PacketPlayInFlying packet, VirtualConnection connection) {
@@ -35,6 +38,7 @@ public class MovementPacketInterceptor extends PacketInterceptor<PacketPlayInFly
 			return true;
 		}
 
+		connection.setInsideACRegion(acDisabledRegion.includes((int) x, (int) y, (int) z));
 		if (!connection.getEnvironment().isValidLocation((int) x, (int) y, (int) z)) {
 			connection.setInsideEnvironment(false);
 			return false;

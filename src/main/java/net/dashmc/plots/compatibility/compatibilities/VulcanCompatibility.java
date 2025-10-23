@@ -100,7 +100,7 @@ public class VulcanCompatibility extends CompatibilityLoader {
 				return;
 
 			Location playerLocation = ev.getPlayer().getLocation();
-			if (!PacketPlots.getPlotConfig().getRegion().includesWithBuffer(playerLocation))
+			if (!PacketPlots.getPlotConfig().getDefaultedACRegion().includesWithBuffer(playerLocation))
 				return;
 
 			ev.setCancelled(true);
