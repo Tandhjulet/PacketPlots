@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 import net.dashmc.plots.data.IDataHolder;
 import net.dashmc.plots.events.BlockBagUpdatedEvent;
 import net.dashmc.plots.events.PreBlockBagDepositEvent;
-import net.dashmc.plots.nbt.NBTHelper;
+import net.dashmc.plots.utils.helpers.NBTHelper;
 import net.dashmc.plots.utils.misc.Debug;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.Item;

@@ -1,4 +1,4 @@
-package net.dashmc.plots.nbt;
+package net.dashmc.plots.utils.helpers;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -8,6 +8,10 @@ import net.minecraft.server.v1_8_R3.NBTCompressedStreamTools;
 import net.minecraft.server.v1_8_R3.NBTReadLimiter;
 import net.minecraft.server.v1_8_R3.NBTTagCompound;
 
+/**
+ * Seeing as NBTCompressedStreamTools are so cryptic,
+ * this wrapper exists to give proper names to the methods
+ */
 public class NBTHelper {
 
 	public static void writePayload(DataOutput os, NBTTagCompound tag) throws IOException {
