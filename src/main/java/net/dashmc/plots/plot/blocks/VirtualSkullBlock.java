@@ -3,7 +3,6 @@ package net.dashmc.plots.plot.blocks;
 import net.dashmc.plots.plot.BlockBag;
 import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualBlock;
-import net.dashmc.plots.plot.VirtualEnvironment;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.BlockSkull;
@@ -39,7 +38,7 @@ public class VirtualSkullBlock extends VirtualBlock<BlockSkull> {
 		return super.getCollisionBoundingBox(block, env, pos, state);
 	}
 
-	public int getDropData(VirtualEnvironment environment, BlockPosition blockposition) {
+	public int getDropData(IEnvironment environment, BlockPosition blockposition) {
 		TileEntity tileentity = environment.getTileEntity(blockposition);
 
 		return tileentity instanceof TileEntitySkull ? ((TileEntitySkull) tileentity).getSkullType()

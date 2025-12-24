@@ -501,7 +501,7 @@ public class VirtualEnvironment implements IEnvironment {
 	}
 
 	public class InteractManager {
-		public boolean interact(EntityHuman human, VirtualEnvironment env, ItemStack item, BlockPosition pos,
+		public boolean interact(EntityHuman human, IEnvironment env, ItemStack item, BlockPosition pos,
 				EnumDirection dir, float cX, float cY, float cZ, boolean isBorderPlace) {
 			IBlockData blockData = isBorderPlace ? nmsWorld.getType(pos) : env.getType(pos);
 
@@ -563,7 +563,7 @@ public class VirtualEnvironment implements IEnvironment {
 			return result;
 		}
 
-		private void handleGateMismatch(IBlockData ibd, EntityHuman entity, BlockPosition pos, VirtualEnvironment env) {
+		private void handleGateMismatch(IBlockData ibd, EntityHuman entity, BlockPosition pos, IEnvironment env) {
 			EntityPlayer player = (EntityPlayer) entity;
 
 			if (ibd.getBlock() instanceof BlockDoor) {

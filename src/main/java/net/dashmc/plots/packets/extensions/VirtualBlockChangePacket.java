@@ -3,7 +3,7 @@ package net.dashmc.plots.packets.extensions;
 import java.lang.reflect.Field;
 
 import lombok.Getter;
-import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.plot.IEnvironment;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 
@@ -13,7 +13,7 @@ public class VirtualBlockChangePacket implements IPacketExtension<PacketPlayOutB
 	@Getter
 	private final PacketPlayOutBlockChange packet;
 
-	public VirtualBlockChangePacket(VirtualEnvironment env, BlockPosition pos) {
+	public VirtualBlockChangePacket(IEnvironment env, BlockPosition pos) {
 		packet = new PacketPlayOutBlockChange();
 		packet.block = env.getType(pos);
 

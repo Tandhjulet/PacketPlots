@@ -125,7 +125,7 @@ public abstract class VirtualBlock<T extends Block> {
 		});
 	}
 
-	public static final <T extends Block> AxisAlignedBB getBoundingBox(Block block, VirtualEnvironment env,
+	public static final <T extends Block> AxisAlignedBB getBoundingBox(Block block, IEnvironment env,
 			BlockPosition pos, IBlockData state) {
 		return getAndRun(block, (BiFunction<VirtualBlock<T>, T, AxisAlignedBB>) (virtualBlock, actualBlock) -> {
 			if (virtualBlock == null || actualBlock == null)
@@ -135,7 +135,7 @@ public abstract class VirtualBlock<T extends Block> {
 		});
 	}
 
-	public static final <T extends Block> boolean interact(VirtualEnvironment environment,
+	public static final <T extends Block> boolean interact(IEnvironment environment,
 			BlockPosition blockposition,
 			IBlockData iblockdata,
 			EntityHuman entityhuman, EnumDirection enumdirection, float f, float f1, float f2) {
@@ -149,7 +149,7 @@ public abstract class VirtualBlock<T extends Block> {
 	}
 
 	public static final <T extends Block> void harvestBlock(Block block, IBlockData data,
-			VirtualEnvironment environment,
+			IEnvironment environment,
 			BlockPosition pos, BlockBag bag, TileEntity tile) {
 		getAndRun(block, (BiFunction<VirtualBlock<T>, T, Void>) (virtualBlock, actualBlock) -> {
 			if (virtualBlock == null || block == null) {
@@ -200,7 +200,7 @@ public abstract class VirtualBlock<T extends Block> {
 		});
 	}
 
-	public static final <T extends Block> void onPlace(VirtualEnvironment environment, BlockPosition blockposition,
+	public static final <T extends Block> void onPlace(IEnvironment environment, BlockPosition blockposition,
 			IBlockData iblockdata) {
 		getAndRun(iblockdata, (BiFunction<VirtualBlock<T>, T, Void>) (virtualBlock, block) -> {
 			if (virtualBlock == null || block == null)

@@ -73,7 +73,7 @@ public abstract class VirtualItem<T extends Item> {
 	}
 
 	public static final <T extends Item> boolean placeItem(ItemStack itemStack, EntityHuman entityhuman,
-			VirtualEnvironment env, BlockPosition clicked, EnumDirection dir, float cX, float cY, float cZ,
+			IEnvironment env, BlockPosition clicked, EnumDirection dir, float cX, float cY, float cZ,
 			boolean isBorderPlace) {
 		CraftHumanEntity player = entityhuman.getBukkitEntity();
 

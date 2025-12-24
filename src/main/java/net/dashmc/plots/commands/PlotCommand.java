@@ -12,6 +12,7 @@ import eu.okaeri.commands.bukkit.response.BukkitResponse;
 import eu.okaeri.commands.bukkit.response.RawResponse;
 import eu.okaeri.commands.service.CommandService;
 import net.dashmc.plots.plot.BlockBag;
+import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
 
@@ -52,7 +53,7 @@ public class PlotCommand implements CommandService {
 					.with("name", name);
 		}
 
-		VirtualEnvironment other = VirtualEnvironment.get(playertoVisit);
+		IEnvironment other = VirtualEnvironment.get(playertoVisit);
 		if (other == null)
 			return RawResponse.of("Spilleren {name}s plot er ikke indlæst, og du kan derfor ikke besøge det.")
 					.with("name", name);

@@ -4,7 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_8_R3.event.CraftEventFactory;
 
 import lombok.experimental.UtilityClass;
-import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.plot.IEnvironment;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockChest;
 import net.minecraft.server.v1_8_R3.BlockPosition;
@@ -28,7 +28,7 @@ public class ChestHelper {
 	 *                          will be true. otherwise false.
 	 * @return
 	 */
-	public boolean closeCurrentChest(EntityPlayer player, VirtualEnvironment environment, boolean sessionTerminated) {
+	public boolean closeCurrentChest(EntityPlayer player, IEnvironment environment, boolean sessionTerminated) {
 		PlayerInventory playerInventory = player.inventory;
 		if (!(player.activeContainer instanceof ContainerChest))
 			return false;
@@ -87,7 +87,7 @@ public class ChestHelper {
 		return enclosing != null && enclosing.getName().endsWith(".CraftInventoryCustom");
 	}
 
-	private boolean isChestLocationValid(IInventory inventory, VirtualEnvironment env) {
+	private boolean isChestLocationValid(IInventory inventory, IEnvironment env) {
 		if (!(inventory instanceof TileEntityChest))
 			return false;
 
@@ -98,7 +98,7 @@ public class ChestHelper {
 		return env.getType(pos).getBlock() instanceof BlockChest;
 	}
 
-	private boolean closeContainer(EntityHuman human, IInventory inventory, VirtualEnvironment env,
+	private boolean closeContainer(EntityHuman human, IInventory inventory, IEnvironment env,
 			boolean sessionTerminated) {
 		if (!(inventory instanceof TileEntityChest))
 			return false;

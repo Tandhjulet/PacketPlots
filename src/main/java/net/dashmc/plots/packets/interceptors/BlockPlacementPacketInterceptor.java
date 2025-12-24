@@ -6,8 +6,8 @@ import org.bukkit.util.NumberConversions;
 
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.packets.extensions.VirtualBlockChangePacket;
+import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualConnection;
-import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
@@ -25,7 +25,7 @@ public class BlockPlacementPacketInterceptor extends PacketInterceptor<PacketPla
 	@Override
 	public boolean intercept(PacketPlayInBlockPlace packet, VirtualConnection conn) {
 		EntityPlayer player = conn.getPlayer();
-		VirtualEnvironment env = conn.getEnvironment();
+		IEnvironment env = conn.getEnvironment();
 
 		BlockPosition pos = packet.a();
 

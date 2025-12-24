@@ -46,13 +46,13 @@ public class VirtualChunk implements IDataHolder {
 	private @Getter ChunkCoordIntPair coordPair;
 
 	private Chunk chunk;
-	private @Getter VirtualEnvironment environment;
+	private @Getter IEnvironment environment;
 	private World world;
 	private @Getter Section[] sections = new Section[16];
 	private Map<BlockPosition, TileEntity> tileEntities = new HashMap<>();
 	private @Getter char sectionMask = 0;
 
-	public VirtualChunk(VirtualEnvironment environment, ChunkCoordIntPair coordPair) {
+	public VirtualChunk(IEnvironment environment, ChunkCoordIntPair coordPair) {
 		this.environment = environment;
 		this.coordPair = coordPair;
 		this.world = environment.getNmsWorld();
@@ -78,7 +78,7 @@ public class VirtualChunk implements IDataHolder {
 		}
 	}
 
-	public VirtualChunk(VirtualEnvironment environment, DataInputStream stream) throws IOException {
+	public VirtualChunk(IEnvironment environment, DataInputStream stream) throws IOException {
 		this.environment = environment;
 		this.world = environment.getNmsWorld();
 		deserialize(stream);

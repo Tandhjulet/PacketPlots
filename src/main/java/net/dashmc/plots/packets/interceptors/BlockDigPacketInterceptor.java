@@ -2,8 +2,8 @@ package net.dashmc.plots.packets.interceptors;
 
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.packets.extensions.VirtualBlockChangePacket;
+import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualConnection;
-import net.dashmc.plots.plot.VirtualEnvironment;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.Material;
@@ -17,7 +17,7 @@ public class BlockDigPacketInterceptor extends PacketInterceptor<PacketPlayInBlo
 	// https://github.com/Attano/Spigot-1.8/blob/9db48bc15e203179554b8d992ca6b0a528c8d300/net/minecraft/server/v1_8_R3/PlayerConnection.java#L544
 	// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/PlayerInteractManager.java#L203
 	public boolean intercept(PacketPlayInBlockDig packet, VirtualConnection conn) {
-		VirtualEnvironment env = conn.getEnvironment();
+		IEnvironment env = conn.getEnvironment();
 		EntityPlayer player = conn.getPlayer();
 
 		BlockPosition pos = packet.a();

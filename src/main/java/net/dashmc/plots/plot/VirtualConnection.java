@@ -53,7 +53,7 @@ public class VirtualConnection {
 		return connections.get(player);
 	}
 
-	private VirtualConnection(EntityPlayer player, VirtualEnvironment environment) {
+	private VirtualConnection(EntityPlayer player, IEnvironment environment) {
 		this.player = player;
 		this.environment = environment;
 		this.original = environment;
@@ -63,8 +63,8 @@ public class VirtualConnection {
 
 	private boolean injected;
 	private EntityPlayer player;
-	private VirtualEnvironment environment;
-	private VirtualEnvironment original;
+	private IEnvironment environment;
+	private IEnvironment original;
 	private boolean insideEnvironment;
 	private boolean insideACRegion;
 
@@ -96,7 +96,7 @@ public class VirtualConnection {
 	 * @param other
 	 * @return the new environment, if any.
 	 */
-	protected IEnvironment visitLocally(VirtualEnvironment other) {
+	protected IEnvironment visitLocally(IEnvironment other) {
 		if (other.equals(environment))
 			return null;
 
@@ -110,7 +110,7 @@ public class VirtualConnection {
 		return other;
 	}
 
-	public void visit(VirtualEnvironment other) {
+	public void visit(IEnvironment other) {
 		if (other.equals(environment))
 			return;
 
@@ -156,7 +156,7 @@ public class VirtualConnection {
 		});
 	}
 
-	public static VirtualConnection establish(EntityPlayer player, VirtualEnvironment environment) {
+	public static VirtualConnection establish(EntityPlayer player, IEnvironment environment) {
 		return new VirtualConnection(player, environment);
 	}
 
