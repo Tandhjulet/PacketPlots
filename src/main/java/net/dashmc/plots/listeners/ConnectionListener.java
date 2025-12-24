@@ -12,11 +12,11 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.player.VirtualPlayerInteractManager;
-import net.dashmc.plots.plot.BlockBag;
 import net.dashmc.plots.plot.Environment;
 import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.plot.data.BlockBag;
 import net.dashmc.plots.utils.Debug;
 
 public class ConnectionListener implements Listener {

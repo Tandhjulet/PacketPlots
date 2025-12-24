@@ -4,8 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
 import net.dashmc.plots.pipeline.RenderPipeline;
-import net.dashmc.plots.plot.VirtualChunk;
 import net.dashmc.plots.plot.VirtualConnection;
+import net.dashmc.plots.plot.data.VirtualChunk;
 import net.dashmc.plots.utils.MethodWrapper;
 import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.Chunk;

@@ -3,6 +3,7 @@ package net.dashmc.plots.packets.extensions;
 import java.lang.reflect.Field;
 
 import lombok.Getter;
+import net.dashmc.plots.packets.IPacketExtension;
 import net.dashmc.plots.plot.IEnvironment;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
@@ -22,6 +23,7 @@ public class VirtualBlockChangePacket implements IPacketExtension<PacketPlayOutB
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			e.printStackTrace();
 		}
+
 	}
 
 	static {

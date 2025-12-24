@@ -4,7 +4,7 @@ import org.bukkit.util.BlockVector;
 
 import lombok.RequiredArgsConstructor;
 import net.dashmc.plots.pipeline.IRenderTransformer;
-import net.dashmc.plots.plot.VirtualChunk;
+import net.dashmc.plots.plot.data.VirtualChunk;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 
 @RequiredArgsConstructor

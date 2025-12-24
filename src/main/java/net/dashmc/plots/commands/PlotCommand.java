@@ -11,10 +11,10 @@ import eu.okaeri.commands.bukkit.annotation.Permission;
 import eu.okaeri.commands.bukkit.response.BukkitResponse;
 import eu.okaeri.commands.bukkit.response.RawResponse;
 import eu.okaeri.commands.service.CommandService;
-import net.dashmc.plots.plot.BlockBag;
 import net.dashmc.plots.plot.Environment;
 import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualConnection;
+import net.dashmc.plots.plot.data.BlockBag;
 
 @eu.okaeri.commands.annotation.Command(label = "plot", description = "Plot command")
 public class PlotCommand implements CommandService {

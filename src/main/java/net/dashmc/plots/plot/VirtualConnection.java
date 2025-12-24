@@ -20,6 +20,7 @@ import net.dashmc.plots.compatibility.PluginCompatibility;
 import net.dashmc.plots.events.ACRegionEnterExit;
 import net.dashmc.plots.events.EnvironmentEnterExit;
 import net.dashmc.plots.packets.PacketInterceptor;
+import net.dashmc.plots.plot.data.VirtualChunk;
 import net.dashmc.plots.utils.ChestHelper;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.EntityPlayer;

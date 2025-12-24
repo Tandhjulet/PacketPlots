@@ -3,7 +3,7 @@ package net.dashmc.plots.pipeline.transformers;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import net.dashmc.plots.pipeline.IRenderTransformer;
-import net.dashmc.plots.plot.VirtualChunk;
+import net.dashmc.plots.plot.data.VirtualChunk;
 import net.dashmc.plots.utils.CuboidRegion;
 import net.minecraft.server.v1_8_R3.Chunk;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;

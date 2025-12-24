@@ -11,6 +11,11 @@ public class ChunkMapSendCompatibility extends CompatibilityLoader {
 		return Bukkit.getServer().getPluginManager().getPlugin("packetevents") != null;
 	}
 
+	/**
+	 * doesnt actively change anything - is depended upon
+	 * 
+	 * @see src\main\java\net\dashmc\plots\plot\VirtualConnection.java#L143
+	 */
 	@Override
 	public void activate(boolean forced) {
 	}

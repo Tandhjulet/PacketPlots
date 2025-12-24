@@ -7,7 +7,7 @@ import org.bukkit.event.HandlerList;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.dashmc.plots.plot.BlockBag;
+import net.dashmc.plots.plot.data.BlockBag;
 
 @Getter
 @RequiredArgsConstructor

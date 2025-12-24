@@ -3,8 +3,8 @@ package net.dashmc.plots.utils;
 import org.apache.logging.log4j.util.TriConsumer;
 import org.bukkit.Location;
 import lombok.Getter;
-import net.dashmc.plots.plot.VirtualChunk;
-import net.dashmc.plots.plot.VirtualChunk.Section;
+import net.dashmc.plots.plot.data.VirtualChunk;
+import net.dashmc.plots.plot.data.VirtualChunk.Section;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 
