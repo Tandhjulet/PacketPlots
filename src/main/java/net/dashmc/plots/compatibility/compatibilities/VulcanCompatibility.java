@@ -17,7 +17,7 @@ import org.bukkit.plugin.Plugin;
 import me.frep.vulcan.api.event.VulcanFlagEvent;
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.compatibility.CompatibilityLoader;
-import net.dashmc.plots.utils.Debug;
+import net.dashmc.plots.utils.misc.Debug;
 
 public class VulcanCompatibility extends CompatibilityLoader {
 

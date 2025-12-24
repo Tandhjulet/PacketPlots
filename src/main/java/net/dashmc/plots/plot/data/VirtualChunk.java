@@ -16,7 +16,7 @@ import net.dashmc.plots.data.IDataHolder;
 import net.dashmc.plots.nbt.NBTHelper;
 import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.utils.CuboidRegion;
-import net.dashmc.plots.utils.Debug;
+import net.dashmc.plots.utils.misc.Debug;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockContainer;
 import net.minecraft.server.v1_8_R3.BlockPosition;

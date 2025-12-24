@@ -1,4 +1,4 @@
-package net.dashmc.plots.utils;
+package net.dashmc.plots.utils.helpers;
 
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_8_R3.event.CraftEventFactory;

@@ -5,7 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.data.BlockBag;
 import net.dashmc.plots.plot.data.VirtualBlock;
-import net.dashmc.plots.utils.MethodWrapper;
+import net.dashmc.plots.utils.helpers.MethodWrapper;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import net.minecraft.server.v1_8_R3.BlockDoor;
 import net.minecraft.server.v1_8_R3.BlockPosition;

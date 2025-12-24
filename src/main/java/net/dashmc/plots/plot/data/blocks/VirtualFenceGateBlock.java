@@ -2,7 +2,7 @@ package net.dashmc.plots.plot.data.blocks;
 
 import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.data.VirtualBlock;
-import net.dashmc.plots.utils.Debug;
+import net.dashmc.plots.utils.misc.Debug;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import net.minecraft.server.v1_8_R3.BlockFenceGate;
 import net.minecraft.server.v1_8_R3.BlockPosition;

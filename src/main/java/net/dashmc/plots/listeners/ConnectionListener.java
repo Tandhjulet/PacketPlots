@@ -17,7 +17,7 @@ import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.CuboidEnvironment;
 import net.dashmc.plots.plot.data.BlockBag;
-import net.dashmc.plots.utils.Debug;
+import net.dashmc.plots.utils.misc.Debug;
 
 public class ConnectionListener implements Listener {
 

@@ -3,7 +3,7 @@ package net.dashmc.plots.compatibility;
 import java.util.HashSet;
 
 import lombok.Getter;
-import net.dashmc.plots.utils.Debug;
+import net.dashmc.plots.utils.misc.Debug;
 
 public class PluginCompatibility {
 	@Getter

@@ -1,4 +1,4 @@
-package net.dashmc.plots.utils;
+package net.dashmc.plots.utils.misc;
 
 import java.util.logging.Logger;
 

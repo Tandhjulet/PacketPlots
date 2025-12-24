@@ -3,7 +3,7 @@ package net.dashmc.plots.packets.interceptors;
 import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualConnection;
-import net.dashmc.plots.utils.ChestHelper;
+import net.dashmc.plots.utils.helpers.ChestHelper;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.PacketPlayInCloseWindow;
 

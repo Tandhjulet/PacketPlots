@@ -1,4 +1,4 @@
-package net.dashmc.plots.utils;
+package net.dashmc.plots.utils.misc;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 
+import net.dashmc.plots.utils.helpers.MethodWrapper;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Packet;
 import net.minecraft.server.v1_8_R3.PlayerChunkMap;

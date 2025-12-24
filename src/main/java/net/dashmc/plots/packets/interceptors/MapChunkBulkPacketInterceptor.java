@@ -11,7 +11,7 @@ import net.dashmc.plots.packets.PacketInterceptor;
 import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.data.VirtualChunk;
-import net.dashmc.plots.utils.Utils;
+import net.dashmc.plots.utils.misc.Utils;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunkBulk;

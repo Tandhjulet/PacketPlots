@@ -1,4 +1,4 @@
-package net.dashmc.plots.utils;
+package net.dashmc.plots.utils.helpers;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
