@@ -1,7 +1,7 @@
 package net.dashmc.plots.plot.blocks;
 
+import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualBlock;
-import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import net.minecraft.server.v1_8_R3.BlockFenceGate;
@@ -14,7 +14,7 @@ import net.minecraft.server.v1_8_R3.PacketPlayOutWorldEvent;
 public class VirtualFenceGateBlock extends VirtualBlock<BlockFenceGate> {
 
 	@Override
-	public AxisAlignedBB getCollisionBoundingBox(BlockFenceGate block, VirtualEnvironment env, BlockPosition pos,
+	public AxisAlignedBB getCollisionBoundingBox(BlockFenceGate block, IEnvironment env, BlockPosition pos,
 			IBlockData state) {
 
 		Debug.log(block.getClass() + ", " + state.toString());
@@ -23,7 +23,7 @@ public class VirtualFenceGateBlock extends VirtualBlock<BlockFenceGate> {
 	}
 
 	@Override
-	public boolean interact(BlockFenceGate block, VirtualEnvironment environment, BlockPosition blockposition,
+	public boolean interact(BlockFenceGate block, IEnvironment environment, BlockPosition blockposition,
 			IBlockData iblockdata, EntityHuman entityhuman, EnumDirection enumdirection, float f, float f1, float f2) {
 		if (((Boolean) iblockdata.get(BlockFenceGate.OPEN)).booleanValue()) {
 			iblockdata = iblockdata.set(BlockFenceGate.OPEN, Boolean.valueOf(false));

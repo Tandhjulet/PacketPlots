@@ -2,8 +2,8 @@ package net.dashmc.plots.plot.items;
 
 import java.lang.reflect.Field;
 
+import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualBlock;
-import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.plot.VirtualItem;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
@@ -19,7 +19,7 @@ public class VirtualItemDoor extends VirtualItem<ItemDoor> {
 	private static Field blockField;
 
 	@Override
-	public boolean interactWith(ItemStack item, EntityHuman player, VirtualEnvironment environment, BlockPosition pos,
+	public boolean interactWith(ItemStack item, EntityHuman player, IEnvironment environment, BlockPosition pos,
 			EnumDirection direction, float cX, float cY, float cZ, boolean isBorderPlace) {
 		if (direction != EnumDirection.UP)
 			return false;
@@ -54,7 +54,7 @@ public class VirtualItemDoor extends VirtualItem<ItemDoor> {
 	}
 
 	// https://github.com/Attano/Spigot-1.8/blob/master/net/minecraft/server/v1_8_R3/ItemDoor.java#L35
-	private static void placeDoor(VirtualEnvironment environment, BlockPosition pos, EnumDirection dir, Block block) {
+	private static void placeDoor(IEnvironment environment, BlockPosition pos, EnumDirection dir, Block block) {
 		BlockPosition blockposition1 = pos.shift(dir.e());
 		BlockPosition blockposition2 = pos.shift(dir.f());
 		int i = (environment.getType(blockposition2).getBlock().isOccluding() ? 1 : 0)

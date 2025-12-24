@@ -3,8 +3,8 @@ package net.dashmc.plots.plot.blocks;
 import java.lang.reflect.InvocationTargetException;
 
 import net.dashmc.plots.plot.BlockBag;
+import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualBlock;
-import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.MethodWrapper;
 import net.minecraft.server.v1_8_R3.AxisAlignedBB;
 import net.minecraft.server.v1_8_R3.BlockDoor;
@@ -20,7 +20,7 @@ import net.minecraft.server.v1_8_R3.TileEntity;
 public class VirtualBlockDoor extends VirtualBlock<BlockDoor> {
 
 	@Override
-	public void onBlockHarvested(BlockDoor block, VirtualEnvironment environment, BlockPosition pos, IBlockData data,
+	public void onBlockHarvested(BlockDoor block, IEnvironment environment, BlockPosition pos, IBlockData data,
 			BlockBag bag, TileEntity tile) {
 		// BlockPosition lower = pos.down();
 		// if (data.get(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.UPPER
@@ -31,7 +31,7 @@ public class VirtualBlockDoor extends VirtualBlock<BlockDoor> {
 	}
 
 	@Override
-	public boolean interact(BlockDoor block, VirtualEnvironment environment, BlockPosition pos,
+	public boolean interact(BlockDoor block, IEnvironment environment, BlockPosition pos,
 			IBlockData iblockdata, EntityHuman entityhuman, EnumDirection enumdirection, float f, float f1, float f2) {
 
 		if (block.getMaterial() == Material.ORE)
@@ -52,7 +52,7 @@ public class VirtualBlockDoor extends VirtualBlock<BlockDoor> {
 	}
 
 	@Override
-	public void onRelatedUpdated(BlockDoor block, VirtualEnvironment env, BlockPosition pos, BlockBag bag,
+	public void onRelatedUpdated(BlockDoor block, IEnvironment env, BlockPosition pos, BlockBag bag,
 			IBlockData newBlockData) {
 		if (newBlockData.get(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.UPPER) {
 			BlockPosition lower = pos.down();
@@ -73,13 +73,13 @@ public class VirtualBlockDoor extends VirtualBlock<BlockDoor> {
 	}
 
 	@Override
-	public AxisAlignedBB getCollisionBoundingBox(BlockDoor block, VirtualEnvironment env, BlockPosition pos,
+	public AxisAlignedBB getCollisionBoundingBox(BlockDoor block, IEnvironment env, BlockPosition pos,
 			IBlockData state) {
 		updateShape(block, env, pos);
 		return super.getCollisionBoundingBox(block, env, pos, state);
 	}
 
-	private void updateShape(BlockDoor block, VirtualEnvironment env, BlockPosition pos) {
+	private void updateShape(BlockDoor block, IEnvironment env, BlockPosition pos) {
 		int facing = getFacingData(env, pos);
 
 		try {
@@ -91,7 +91,7 @@ public class VirtualBlockDoor extends VirtualBlock<BlockDoor> {
 		}
 	}
 
-	private static int getFacingData(VirtualEnvironment env, BlockPosition blockposition) {
+	private static int getFacingData(IEnvironment env, BlockPosition blockposition) {
 		IBlockData iblockdata = env.getType(blockposition);
 		int i = iblockdata.getBlock().toLegacyData(iblockdata);
 		boolean flag = (i & 8) != 0;

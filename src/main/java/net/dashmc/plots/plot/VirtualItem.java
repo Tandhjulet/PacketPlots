@@ -48,9 +48,8 @@ public abstract class VirtualItem<T extends Item> {
 	 * @param isBorderPlace
 	 * @return
 	 */
-	public abstract boolean interactWith(ItemStack item, EntityHuman player, VirtualEnvironment environment,
-			BlockPosition pos,
-			EnumDirection direction, float cX, float cY, float cZ, boolean isBorderPlace);
+	public abstract boolean interactWith(ItemStack item, EntityHuman player, IEnvironment environment,
+			BlockPosition pos, EnumDirection direction, float cX, float cY, float cZ, boolean isBorderPlace);
 
 	public abstract Class<T> getClazz();
 

@@ -4,8 +4,8 @@ import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
 
+import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualBlock;
-import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.plot.VirtualItem;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
@@ -25,7 +25,7 @@ import net.minecraft.server.v1_8_R3.TileEntitySkull;
 public class VirtualItemSkull extends VirtualItem<ItemSkull> {
 
 	@Override
-	public boolean interactWith(ItemStack item, EntityHuman player, VirtualEnvironment environment, BlockPosition pos,
+	public boolean interactWith(ItemStack item, EntityHuman player, IEnvironment environment, BlockPosition pos,
 			EnumDirection direction, float cX, float cY, float cZ, boolean isBorderPlace) {
 		if (direction == EnumDirection.DOWN)
 			return false;

@@ -37,35 +37,35 @@ import net.minecraft.server.v1_8_R3.TileEntity;
 public abstract class VirtualBlock<T extends Block> {
 	private static HashMap<Class<? extends Block>, VirtualBlock<? extends Block>> virtualBlocks = new HashMap<>();
 
-	public boolean interact(T block, VirtualEnvironment environment, BlockPosition blockposition,
+	public boolean interact(T block, IEnvironment environment, BlockPosition blockposition,
 			IBlockData iblockdata, EntityHuman entityhuman, EnumDirection enumdirection, float f, float f1, float f2) {
 		return false;
 	}
 
-	public void onPlace(T block, VirtualEnvironment environment, BlockPosition pos, IBlockData blockData) {
+	public void onPlace(T block, IEnvironment environment, BlockPosition pos, IBlockData blockData) {
 	}
 
 	public void remove(T block, IEnvironment environment, BlockPosition pos, IBlockData blockData) {
 	}
 
-	public boolean canPlace(T block, VirtualEnvironment environment, BlockPosition pos, EnumDirection direction,
+	public boolean canPlace(T block, IEnvironment environment, BlockPosition pos, EnumDirection direction,
 			ItemStack itemStack) {
 		return canPlace(block, environment, pos, direction);
 	}
 
-	public boolean canPlace(T block, VirtualEnvironment environment, BlockPosition pos, EnumDirection direction) {
+	public boolean canPlace(T block, IEnvironment environment, BlockPosition pos, EnumDirection direction) {
 		return canPlace(block, environment, pos);
 	}
 
-	public boolean canPlace(T block, VirtualEnvironment environment, BlockPosition pos) {
+	public boolean canPlace(T block, IEnvironment environment, BlockPosition pos) {
 		return environment.getType(pos).getBlock().getMaterial().isReplaceable();
 	}
 
-	public void onRelatedUpdated(T block, VirtualEnvironment env, BlockPosition pos, BlockBag bag,
+	public void onRelatedUpdated(T block, IEnvironment env, BlockPosition pos, BlockBag bag,
 			IBlockData newBlockData) {
 	}
 
-	public void onBlockHarvested(T block, VirtualEnvironment environment, BlockPosition pos, IBlockData data,
+	public void onBlockHarvested(T block, IEnvironment environment, BlockPosition pos, IBlockData data,
 			BlockBag bag,
 			TileEntity tile) {
 		bag.add(new ItemStack(getItemType(block, data), 1, getDropData(data)));
@@ -75,7 +75,7 @@ public abstract class VirtualBlock<T extends Block> {
 		return Item.getItemOf(block);
 	}
 
-	public int getDropData(VirtualEnvironment env, BlockPosition pos) {
+	public int getDropData(IEnvironment env, BlockPosition pos) {
 		return getDropData(env.getType(pos));
 	}
 
@@ -83,7 +83,7 @@ public abstract class VirtualBlock<T extends Block> {
 		return 0;
 	}
 
-	public AxisAlignedBB getCollisionBoundingBox(T block, VirtualEnvironment env, BlockPosition pos, IBlockData state) {
+	public AxisAlignedBB getCollisionBoundingBox(T block, IEnvironment env, BlockPosition pos, IBlockData state) {
 		double minX = block.B();
 		double minY = block.D();
 		double minZ = block.F();
@@ -100,7 +100,7 @@ public abstract class VirtualBlock<T extends Block> {
 		return false;
 	}
 
-	public void postPlace(T block, VirtualEnvironment environment, BlockPosition blockposition, IBlockData iblockdata,
+	public void postPlace(T block, IEnvironment environment, BlockPosition blockposition, IBlockData iblockdata,
 			EntityLiving entityliving, ItemStack itemstack) {
 	}
 
@@ -113,7 +113,7 @@ public abstract class VirtualBlock<T extends Block> {
 		virtualBlocks.put(getClazz(), this);
 	}
 
-	public static final <T extends Block> void notify(Block block, VirtualEnvironment env, BlockPosition pos,
+	public static final <T extends Block> void notify(Block block, IEnvironment env, BlockPosition pos,
 			BlockBag bag,
 			IBlockData newBlockData) {
 		getAndRun(block, (BiFunction<VirtualBlock<T>, T, Void>) (virtualBlock, actualBlock) -> {
@@ -170,7 +170,7 @@ public abstract class VirtualBlock<T extends Block> {
 		});
 	}
 
-	public static final <T extends Block> boolean mayPlace(Block toPlace, VirtualEnvironment environment,
+	public static final <T extends Block> boolean mayPlace(Block toPlace, IEnvironment environment,
 			BlockPosition pos, EnumDirection direction, ItemStack itemStack) {
 		return getAndRun(toPlace, (BiFunction<VirtualBlock<T>, T, Boolean>) (virtualBlock, block) -> {
 			if (virtualBlock == null || block == null)
@@ -179,7 +179,7 @@ public abstract class VirtualBlock<T extends Block> {
 		});
 	}
 
-	public static final <T extends Block> void postPlace(Block placedBlock, VirtualEnvironment environment,
+	public static final <T extends Block> void postPlace(Block placedBlock, IEnvironment environment,
 			BlockPosition pos,
 			IBlockData blockData, EntityHuman entityHuman, ItemStack itemStack) {
 		getAndRun(placedBlock, (BiFunction<VirtualBlock<T>, T, Void>) (virtualBlock, block) -> {

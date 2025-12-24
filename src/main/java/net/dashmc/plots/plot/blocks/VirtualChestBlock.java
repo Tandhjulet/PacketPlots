@@ -3,8 +3,8 @@ package net.dashmc.plots.plot.blocks;
 import java.util.Iterator;
 
 import net.dashmc.plots.plot.BlockBag;
+import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualBlock;
-import net.dashmc.plots.plot.VirtualEnvironment;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockChest;
 import net.minecraft.server.v1_8_R3.BlockPosition;
@@ -24,7 +24,7 @@ import net.minecraft.server.v1_8_R3.TileEntityChest;
 public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 
 	@Override
-	public void onBlockHarvested(BlockChest block, VirtualEnvironment environment, BlockPosition pos, IBlockData data,
+	public void onBlockHarvested(BlockChest block, IEnvironment environment, BlockPosition pos, IBlockData data,
 			BlockBag bag,
 			TileEntity tile) {
 		ITileInventory inventory = getInventory(environment, pos, block);
@@ -37,7 +37,7 @@ public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 	};
 
 	@Override
-	public boolean interact(BlockChest block, VirtualEnvironment environment, BlockPosition blockposition,
+	public boolean interact(BlockChest block, IEnvironment environment, BlockPosition blockposition,
 			IBlockData iblockdata,
 			EntityHuman entityhuman,
 			EnumDirection enumdirection, float f, float f1, float f2) {
@@ -59,7 +59,7 @@ public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 	}
 
 	@Override
-	public void onPlace(BlockChest chest, VirtualEnvironment world, BlockPosition blockposition,
+	public void onPlace(BlockChest chest, IEnvironment world, BlockPosition blockposition,
 			IBlockData iblockdata) {
 		this.e(chest, world, blockposition, iblockdata);
 		Iterator<EnumDirection> iterator = EnumDirection.EnumDirectionLimit.HORIZONTAL.iterator();
@@ -76,7 +76,7 @@ public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 	}
 
 	@Override
-	public void postPlace(BlockChest chest, VirtualEnvironment environment, BlockPosition blockposition,
+	public void postPlace(BlockChest chest, IEnvironment environment, BlockPosition blockposition,
 			IBlockData iblockdata, EntityLiving entityliving, ItemStack itemstack) {
 		EnumDirection enumdirection = EnumDirection
 				.fromType2(MathHelper.floor((double) (entityliving.yaw * 4.0F / 360.0F) + 0.5D) & 3).opposite();
@@ -122,7 +122,7 @@ public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 	}
 
 	@Override
-	public boolean canPlace(BlockChest chest, VirtualEnvironment environment, BlockPosition blockposition) {
+	public boolean canPlace(BlockChest chest, IEnvironment environment, BlockPosition blockposition) {
 		int i = 0;
 		BlockPosition blockposition1 = blockposition.west();
 		BlockPosition blockposition2 = blockposition.east();
@@ -153,7 +153,7 @@ public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 		return i <= 1;
 	}
 
-	private boolean checkForSpace(BlockChest chest, VirtualEnvironment environment, BlockPosition blockposition) {
+	private boolean checkForSpace(BlockChest chest, IEnvironment environment, BlockPosition blockposition) {
 		if (environment.getType(blockposition).getBlock() != chest) {
 			return false;
 		}
@@ -170,7 +170,7 @@ public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 		return true;
 	}
 
-	public IBlockData e(BlockChest chest, VirtualEnvironment world, BlockPosition blockposition,
+	public IBlockData e(BlockChest chest, IEnvironment world, BlockPosition blockposition,
 			IBlockData iblockdata) {
 		IBlockData iblockdata1 = world.getType(blockposition.north());
 		IBlockData iblockdata2 = world.getType(blockposition.south());
@@ -250,7 +250,7 @@ public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 		return iblockdata;
 	}
 
-	public ITileInventory getInventory(VirtualEnvironment environment, BlockPosition blockposition, BlockChest chest) {
+	public ITileInventory getInventory(IEnvironment environment, BlockPosition blockposition, BlockChest chest) {
 		TileEntity tileentity = environment.getTileEntity(blockposition);
 
 		if (!(tileentity instanceof TileEntityChest)) {
@@ -292,7 +292,7 @@ public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 		}
 	}
 
-	private boolean isBlockAboveOccluding(VirtualEnvironment environment, BlockPosition blockposition) {
+	private boolean isBlockAboveOccluding(IEnvironment environment, BlockPosition blockposition) {
 		return environment.getType(blockposition.up()).getBlock().isOccluding();
 	}
 

@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 import lombok.Getter;
-import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.plot.IEnvironment;
 import net.minecraft.server.v1_8_R3.Blocks;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockAction;
@@ -12,10 +12,10 @@ import net.minecraft.server.v1_8_R3.TileEntityEnderChest;
 
 @Getter
 public class EnderChestTileWrapper extends TileEntityEnderChest {
-	private final VirtualEnvironment environment;
+	private final IEnvironment environment;
 	private TileEntityEnderChest wrapped;
 
-	public EnderChestTileWrapper(VirtualEnvironment env, TileEntityEnderChest src) {
+	public EnderChestTileWrapper(IEnvironment env, TileEntityEnderChest src) {
 		this.environment = env;
 		this.wrapped = src;
 

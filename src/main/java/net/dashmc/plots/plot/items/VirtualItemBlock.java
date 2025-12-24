@@ -1,7 +1,7 @@
 package net.dashmc.plots.plot.items;
 
+import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualBlock;
-import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.plot.VirtualItem;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.Block;
@@ -17,7 +17,7 @@ import net.minecraft.server.v1_8_R3.TileEntity;
 public class VirtualItemBlock extends VirtualItem<ItemBlock> {
 
 	@Override
-	public boolean interactWith(ItemStack item, EntityHuman player, VirtualEnvironment environment, BlockPosition pos,
+	public boolean interactWith(ItemStack item, EntityHuman player, IEnvironment environment, BlockPosition pos,
 			EnumDirection direction, float cX, float cY, float cZ, boolean isBorderPlace) {
 		IBlockData ibd = isBorderPlace ? environment.getNmsWorld().getType(pos) : environment.getType(pos);
 		Block block = ibd.getBlock();
@@ -56,7 +56,7 @@ public class VirtualItemBlock extends VirtualItem<ItemBlock> {
 	}
 
 	// https://github.com/Attano/Spigot-1.8/blob/9db48bc15e203179554b8d992ca6b0a528c8d300/net/minecraft/server/v1_8_R3/ItemBlock.java
-	public static boolean initializeBlock(VirtualEnvironment env, BlockPosition pos, ItemStack itemStack) {
+	public static boolean initializeBlock(IEnvironment env, BlockPosition pos, ItemStack itemStack) {
 		if (!(itemStack.hasTag() && itemStack.getTag().hasKeyOfType("BlockEntityTag", 10)))
 			return false;
 		TileEntity tile = env.getTileEntity(pos);

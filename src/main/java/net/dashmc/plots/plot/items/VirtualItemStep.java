@@ -2,7 +2,7 @@ package net.dashmc.plots.plot.items;
 
 import java.lang.reflect.Field;
 
-import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualItem;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.BlockStepAbstract;
@@ -20,7 +20,7 @@ public class VirtualItemStep extends VirtualItem<ItemStep> {
 	private static Field doubleField;
 
 	@Override
-	public boolean interactWith(ItemStack item, EntityHuman player, VirtualEnvironment environment, BlockPosition pos,
+	public boolean interactWith(ItemStack item, EntityHuman player, IEnvironment environment, BlockPosition pos,
 			EnumDirection direction, float cX, float cY, float cZ, boolean isBorderPlace) {
 		if (item.count == 0)
 			return false;
