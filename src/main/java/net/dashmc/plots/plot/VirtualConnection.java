@@ -20,6 +20,7 @@ import net.dashmc.plots.compatibility.PluginCompatibility;
 import net.dashmc.plots.events.ACRegionEnterExit;
 import net.dashmc.plots.events.EnvironmentEnterExit;
 import net.dashmc.plots.packets.PacketInterceptor;
+import net.dashmc.plots.utils.ChestHelper;
 import net.dashmc.plots.utils.Debug;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.Packet;
@@ -95,7 +96,7 @@ public class VirtualConnection {
 	 * @param other
 	 * @return the new environment, if any.
 	 */
-	protected VirtualEnvironment visitLocally(VirtualEnvironment other) {
+	protected IEnvironment visitLocally(VirtualEnvironment other) {
 		if (other.equals(environment))
 			return null;
 
@@ -248,7 +249,15 @@ public class VirtualConnection {
 			System.err.println("Netty pipeline exception: " + cause + " (environment owneruuid: "
 					+ environment.getOwnerUuid() + ")");
 			cause.printStackTrace();
+
+			System.err.println("Attempting to shut down player gracefully!");
+			shutdownGracefully();
+
 			super.exceptionCaught(ctx, cause);
+		}
+
+		public void shutdownGracefully() {
+			ChestHelper.closeCurrentChest(player, environment, true);
 		}
 	}
 }

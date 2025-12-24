@@ -58,6 +58,8 @@ public class HDBCompatibility extends CompatibilityLoader implements Listener {
 			ItemStack[] items = event.getItems();
 			for (int i = 0; i < items.length; i++) {
 				ItemStack item = items[i];
+				if (item == null)
+					continue;
 				if (item.getItem() != Items.SKULL)
 					continue;
 				if (item.getData() != 3)

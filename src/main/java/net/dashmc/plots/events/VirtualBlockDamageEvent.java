@@ -10,7 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.plot.IEnvironment;
 
 @Getter
 @RequiredArgsConstructor
@@ -21,7 +21,7 @@ public class VirtualBlockDamageEvent extends Event implements Cancellable {
 	private final Player player;
 	private final ItemStack itemInHand;
 	private final boolean instaBreak;
-	private final VirtualEnvironment environment;
+	private final IEnvironment environment;
 
 	private static final HandlerList handlers = new HandlerList();
 

@@ -8,9 +8,9 @@ import org.bukkit.Bukkit;
 
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.packets.PacketInterceptor;
+import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualChunk;
 import net.dashmc.plots.plot.VirtualConnection;
-import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Utils;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk.ChunkMap;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
@@ -25,7 +25,7 @@ public class MapChunkBulkPacketInterceptor extends PacketInterceptor<PacketPlayO
 
 	@Override
 	public boolean intercept(PacketPlayOutMapChunkBulk packet, VirtualConnection conn) {
-		VirtualEnvironment env = conn.getEnvironment();
+		IEnvironment env = conn.getEnvironment();
 
 		try {
 			LinkedList<Integer> indices = new LinkedList<>();

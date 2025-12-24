@@ -7,7 +7,7 @@ import org.bukkit.event.HandlerList;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.plot.IEnvironment;
 
 @Getter
 @RequiredArgsConstructor
@@ -15,7 +15,7 @@ public class VirtualBlockCanBuildEvent extends Event {
 	private final boolean buildable;
 	private final Location location;
 	private final Material material;
-	private final VirtualEnvironment environment;
+	private final IEnvironment environment;
 
 	private static final HandlerList handlers = new HandlerList();
 

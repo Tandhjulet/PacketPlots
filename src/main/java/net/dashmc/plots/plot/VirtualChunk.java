@@ -185,7 +185,7 @@ public class VirtualChunk implements IDataHolder {
 
 	@Override
 	public void deserialize(DataInputStream stream) throws IOException {
-		VirtualEnvironment environment = getEnvironment();
+		IEnvironment environment = getEnvironment();
 		this.world = environment.getNmsWorld();
 
 		this.coordPair = new ChunkCoordIntPair(stream.readInt(), stream.readInt());

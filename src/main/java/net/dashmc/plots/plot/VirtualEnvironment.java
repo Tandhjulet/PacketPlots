@@ -27,7 +27,6 @@ import com.google.common.collect.Lists;
 import lombok.Getter;
 import lombok.Setter;
 import net.dashmc.plots.PacketPlots;
-import net.dashmc.plots.data.IDataHolder;
 import net.dashmc.plots.events.VirtualBlockBreakEvent;
 import net.dashmc.plots.events.VirtualBlockCanBuildEvent;
 import net.dashmc.plots.events.VirtualBlockDamageEvent;
@@ -52,7 +51,6 @@ import net.minecraft.server.v1_8_R3.Entity;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.EnumDirection;
-import net.minecraft.server.v1_8_R3.IBlockAccess;
 import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.IInventory;
 import net.minecraft.server.v1_8_R3.ITileInventory;
@@ -77,7 +75,7 @@ import net.minecraft.server.v1_8_R3.TileEntity;
  * combined blockdata in sequence z => y => x (so to unpack, loop x => y => z)
  */
 
-public class VirtualEnvironment implements IDataHolder, IBlockAccess {
+public class VirtualEnvironment implements IEnvironment {
 	private static final HashMap<Player, VirtualEnvironment> virtualEnvironments = new HashMap<>();
 	private static final File DATA_DIRECTORY = new File(PacketPlots.getInstance().getDataFolder(), "data");
 
@@ -165,11 +163,13 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 	 * @param entity
 	 * @return
 	 */
+	@Override
 	public boolean isNoOtherEntitiesInside(AxisAlignedBB bb, Entity entity) {
 		return true;
 	}
 
 	// https://github.com/Attano/Spigot-1.8/blob/9db48bc15e203179554b8d992ca6b0a528c8d300/net/minecraft/server/v1_8_R3/World.java#L2664
+	@Override
 	public boolean isBuildable(Block block, BlockPosition pos, boolean ignoreCollision, EnumDirection dir,
 			Entity entity,
 			ItemStack itemStack) {
@@ -200,6 +200,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		return event.isBuildable();
 	}
 
+	@Override
 	public boolean canPlace(BlockPosition pos, EnumDirection dir, ItemStack itemStack, EntityHuman player) {
 		if (player.abilities.mayBuild)
 			return true;
@@ -211,6 +212,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		return itemStack.d(block) || itemStack.x();
 	}
 
+	@Override
 	public void broadcastPacket(Packet<?> packet) {
 		if (packet == null)
 			return;
@@ -220,10 +222,12 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		}
 	}
 
+	@Override
 	public void broadcastTile(TileEntity tile) {
 		broadcastPacket(tile.getUpdatePacket());
 	}
 
+	@Override
 	public void sendTile(TileEntity tile, EntityPlayer to) {
 		Packet<?> packet = tile.getUpdatePacket();
 		if (packet == null)
@@ -232,6 +236,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		to.playerConnection.sendPacket(packet);
 	}
 
+	@Override
 	public void sendTiles(EntityPlayer to) {
 		Iterator<TileEntity> tileIterator = tileEntities.iterator();
 		while (tileIterator.hasNext()) {
@@ -240,10 +245,12 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		}
 	}
 
+	@Override
 	public void sendTiles(Player to) {
 		sendTiles(((CraftPlayer) to).getHandle());
 	}
 
+	@Override
 	public void close() {
 		save();
 
@@ -253,7 +260,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 
 			// we visit locally here to prevent concurrent modification.
 			// it doesnt matter anyway, as the connections are cleared after anyway!
-			VirtualEnvironment newEnv = conn.visitLocally(conn.getOriginal());
+			IEnvironment newEnv = conn.visitLocally(conn.getOriginal());
 			newEnv.getConnections().add(conn);
 		}
 
@@ -263,6 +270,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		virtualChunks.clear();
 	}
 
+	@Override
 	public void save() {
 		try {
 			File dataFile = new File(DATA_DIRECTORY, getOwnerUuid() + ".dat");
@@ -314,6 +322,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		return generatedWith;
 	}
 
+	@Override
 	public void stopVirtualization(EntityPlayer player) {
 		VirtualConnection conn = VirtualConnection.get(player);
 		connections.remove(conn);
@@ -325,14 +334,17 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		});
 	}
 
+	@Override
 	public void startVirtualization(Player player) {
 		startVirtualization(((CraftPlayer) player).getHandle());
 	}
 
+	@Override
 	public void stopVirtualization(Player player) {
 		stopVirtualization(((CraftPlayer) player).getHandle());
 	}
 
+	@Override
 	public void startVirtualization(EntityPlayer player) {
 		VirtualConnection conn = VirtualConnection.establish(player, this);
 		connections.add(conn);
@@ -340,6 +352,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		conn.refreshVirtualizedChunks();
 	}
 
+	@Override
 	public IBlockData getType(BlockPosition pos) {
 		if (!isValidLocation(pos))
 			return Blocks.AIR.getBlockData();
@@ -348,6 +361,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		return chunk.getBlockData(pos);
 	}
 
+	@Override
 	public TileEntity getTileEntity(BlockPosition pos) {
 		if (!isValidLocation(pos))
 			return null;
@@ -367,6 +381,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		return tileEntity;
 	}
 
+	@Override
 	public boolean setBlock(BlockPosition pos, IBlockData blockData, int i) {
 		if (!this.isValidLocation(pos))
 			return false;
@@ -397,10 +412,12 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		VirtualBlock.notify(ibd.getBlock(), this, pos, bag, ibd);
 	}
 
+	@Override
 	public boolean isValidLocation(BlockPosition pos) {
 		return isValidLocation(pos.getX(), pos.getY(), pos.getZ());
 	}
 
+	@Override
 	public boolean isValidLocation(int x, int y, int z) {
 		if (!(x >= -30000000 && z >= -30000000 && x < 30000000
 				&& z < 30000000 && y >= 0 && y < 256))
@@ -409,10 +426,12 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		return region.includes(x, y, z);
 	}
 
+	@Override
 	public Player getOwner() {
 		return Bukkit.getPlayer(ownerUuid);
 	}
 
+	@Override
 	public EntityPlayer getNMSOwner() {
 		return ((CraftPlayer) getOwner()).getHandle();
 	}
@@ -440,6 +459,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		getBlockBag().deserialize(stream);
 	}
 
+	@Override
 	public void setTileEntity(BlockPosition blockPosition, TileEntity tileEntity) {
 		if (tileEntity != null && !tileEntity.x()) {
 			tileEntities.add(tileEntity);
@@ -475,6 +495,7 @@ public class VirtualEnvironment implements IDataHolder, IBlockAccess {
 		getBlockBag().serialize(stream);
 	}
 
+	@Override
 	public BlockBag getBlockBag() {
 		return BlockBag.getBlockBag(getOwner());
 	}

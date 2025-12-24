@@ -45,7 +45,7 @@ public abstract class VirtualBlock<T extends Block> {
 	public void onPlace(T block, VirtualEnvironment environment, BlockPosition pos, IBlockData blockData) {
 	}
 
-	public void remove(T block, VirtualEnvironment environment, BlockPosition pos, IBlockData blockData) {
+	public void remove(T block, IEnvironment environment, BlockPosition pos, IBlockData blockData) {
 	}
 
 	public boolean canPlace(T block, VirtualEnvironment environment, BlockPosition pos, EnumDirection direction,
@@ -96,7 +96,7 @@ public abstract class VirtualBlock<T extends Block> {
 				(double) pos.getX() + maxX, (double) pos.getY() + maxY, (double) pos.getZ() + maxZ);
 	}
 
-	public boolean shouldRemainAt(VirtualEnvironment env, BlockPosition pos) {
+	public boolean shouldRemainAt(IEnvironment env, BlockPosition pos) {
 		return false;
 	}
 
@@ -104,7 +104,7 @@ public abstract class VirtualBlock<T extends Block> {
 			EntityLiving entityliving, ItemStack itemstack) {
 	}
 
-	public void postBreak(T block, VirtualEnvironment environment, BlockPosition blockposition, IBlockData iblockdata) {
+	public void postBreak(T block, IEnvironment environment, BlockPosition blockposition, IBlockData iblockdata) {
 	}
 
 	public abstract Class<T> getClazz();
@@ -161,7 +161,7 @@ public abstract class VirtualBlock<T extends Block> {
 		});
 	}
 
-	public static final <T extends Block> boolean shouldRemainAt(Block block, VirtualEnvironment env,
+	public static final <T extends Block> boolean shouldRemainAt(Block block, IEnvironment env,
 			BlockPosition position) {
 		return getAndRun(block, (BiFunction<VirtualBlock<T>, T, Boolean>) (virtualBlock, actualBlock) -> {
 			if (virtualBlock == null || block == null)
@@ -190,7 +190,7 @@ public abstract class VirtualBlock<T extends Block> {
 		});
 	}
 
-	public static final <T extends Block> void remove(VirtualEnvironment environment, BlockPosition blockposition,
+	public static final <T extends Block> void remove(IEnvironment environment, BlockPosition blockposition,
 			IBlockData iblockdata) {
 		getAndRun(iblockdata, (BiFunction<VirtualBlock<T>, T, Void>) (virtualBlock, block) -> {
 			if (virtualBlock == null || block == null)

@@ -28,6 +28,9 @@ public class VirtualChestBlock extends VirtualBlock<BlockChest> {
 			BlockBag bag,
 			TileEntity tile) {
 		ITileInventory inventory = getInventory(environment, pos, block);
+		if (inventory == null)
+			return;
+
 		bag.addAll(inventory.getContents());
 
 		super.onBlockHarvested(block, environment, pos, data, bag, tile);
