@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
 
 import net.dashmc.plots.data.IDataHolder;
 import net.dashmc.plots.pipeline.RenderPipeline;
-import net.dashmc.plots.plot.VirtualEnvironment.InteractManager;
+import net.dashmc.plots.plot.CuboidEnvironment.InteractManager;
 import net.dashmc.plots.plot.data.BlockBag;
 import net.dashmc.plots.plot.data.VirtualChunk;
 import net.dashmc.plots.utils.CuboidRegion;

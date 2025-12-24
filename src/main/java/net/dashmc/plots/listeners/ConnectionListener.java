@@ -15,7 +15,7 @@ import net.dashmc.plots.player.VirtualPlayerInteractManager;
 import net.dashmc.plots.plot.Environment;
 import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualConnection;
-import net.dashmc.plots.plot.VirtualEnvironment;
+import net.dashmc.plots.plot.CuboidEnvironment;
 import net.dashmc.plots.plot.data.BlockBag;
 import net.dashmc.plots.utils.Debug;
 
@@ -28,7 +28,7 @@ public class ConnectionListener implements Listener {
 			Debug.log(((CraftPlayer) player).getHandle().playerInteractManager.getClass().getName());
 			VirtualPlayerInteractManager.inject(player);
 
-			new VirtualEnvironment(player);
+			new CuboidEnvironment(player);
 		} catch (IOException | IllegalArgumentException | IllegalAccessException e) {
 			Bukkit.getLogger()
 					.severe("A severe error occured whilst loading the PacketPlot of " + player.getUniqueId());

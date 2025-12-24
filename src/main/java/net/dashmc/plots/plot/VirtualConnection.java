@@ -43,7 +43,7 @@ public class VirtualConnection {
 		packetModifiers.put(modifier.getClazz(), modifier);
 	}
 
-	private static final String NETTY_PIPELINE_NAME = "VirtualEnvironment";
+	private static final String NETTY_PIPELINE_NAME = "Environment";
 	private static HashMap<EntityPlayer, VirtualConnection> connections = new HashMap<>();
 
 	public static VirtualConnection get(Player player) {

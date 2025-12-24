@@ -77,7 +77,7 @@ import net.minecraft.server.v1_8_R3.TileEntity;
  * region pos2 (x,y,z 12 bytes - 3x int)
  * combined blockdata in sequence z => y => x (so to unpack, loop x => y => z)
  */
-public class VirtualEnvironment extends Environment {
+public class CuboidEnvironment extends Environment {
 	private @Getter final HashSet<VirtualConnection> connections = new HashSet<>();
 	private @Getter HashMap<Integer, VirtualChunk> virtualChunks = new HashMap<>();
 	private @Getter final List<TileEntity> tileEntities = Lists.newArrayList();
@@ -88,10 +88,10 @@ public class VirtualEnvironment extends Environment {
 	private @Getter CuboidRegion region;
 	private @Getter @Setter RenderPipeline renderPipeline = RenderPipelineFactory.createEmptyPipeline();
 
-	public VirtualEnvironment(Player player) throws IOException {
+	public CuboidEnvironment(Player player) throws IOException {
 		if (!player.isOnline())
 			throw new IOException(
-					"Tried initialization of VirtualEnvironment for offline player: " + player.getUniqueId());
+					"Tried initialization of CuboidEnvironment for offline player: " + player.getUniqueId());
 
 		EntityPlayer nmsOwner = ((CraftPlayer) player).getHandle();
 		File dataFile = new File(DATA_DIRECTORY, player.getUniqueId() + ".dat");
@@ -277,14 +277,14 @@ public class VirtualEnvironment extends Environment {
 		}
 	}
 
-	public VirtualEnvironment(DataInputStream stream) throws IOException {
+	public CuboidEnvironment(DataInputStream stream) throws IOException {
 		readVersionCode(stream);
 		deserialize(stream);
 
 		Player owner = getOwner();
 		EntityPlayer nmsOwner = ((CraftPlayer) owner).getHandle();
 		if (owner == null || !owner.isOnline())
-			throw new IOException("Tried initialization of VirtualEnvironment for offline player: " + ownerUuid);
+			throw new IOException("Tried initialization of CuboidEnvironment for offline player: " + ownerUuid);
 
 		createEnvironment(owner);
 		startVirtualization(nmsOwner);
@@ -567,14 +567,14 @@ public class VirtualEnvironment extends Environment {
 		public void startDestroy(EntityPlayer player, BlockPosition pos, EnumDirection dir) {
 			VirtualInteractEvent event = new VirtualInteractEvent(player, Action.LEFT_CLICK_BLOCK, pos, dir,
 					player.inventory.getItemInHand(), false,
-					VirtualEnvironment.this);
+					CuboidEnvironment.this);
 			Bukkit.getPluginManager().callEvent(event);
 
 			Debug.log("startDestroy called, is interact event cancelled? " + event.isCancelled());
 
 			if (event.isCancelled()) {
 				player.playerConnection
-						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+						.sendPacket(new VirtualBlockChangePacket(CuboidEnvironment.this, pos).getPacket());
 				TileEntity tile = getTileEntity(pos);
 				if (tile != null)
 					player.playerConnection.sendPacket(tile.getUpdatePacket());
@@ -616,13 +616,13 @@ public class VirtualEnvironment extends Environment {
 				if (block == Blocks.WOODEN_DOOR) {
 					boolean bottom = data.get(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.LOWER;
 					player.playerConnection
-							.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+							.sendPacket(new VirtualBlockChangePacket(CuboidEnvironment.this, pos).getPacket());
 					player.playerConnection.sendPacket(
-							new VirtualBlockChangePacket(VirtualEnvironment.this, bottom ? pos.up() : pos.down())
+							new VirtualBlockChangePacket(CuboidEnvironment.this, bottom ? pos.up() : pos.down())
 									.getPacket());
 				} else if (block == Blocks.TRAPDOOR) {
 					player.playerConnection
-							.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+							.sendPacket(new VirtualBlockChangePacket(CuboidEnvironment.this, pos).getPacket());
 				}
 			} else if (block.getMaterial() != Material.AIR) {
 				// block.attack(nmsWorld, pos, player);
@@ -632,18 +632,18 @@ public class VirtualEnvironment extends Environment {
 			if (event.getUseItemInHand() == Event.Result.DENY) {
 				if (f > 1.0f)
 					player.playerConnection
-							.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+							.sendPacket(new VirtualBlockChangePacket(CuboidEnvironment.this, pos).getPacket());
 
 				return;
 			}
 
 			VirtualBlockDamageEvent blockEvent = new VirtualBlockDamageEvent(Utils.convertPosToLoc(world, pos),
 					player.getBukkitEntity(), player.getBukkitEntity().getItemInHand(), f >= 1.0f,
-					VirtualEnvironment.this);
+					CuboidEnvironment.this);
 			if (blockEvent.isCancelled()) {
 
 				player.playerConnection
-						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+						.sendPacket(new VirtualBlockChangePacket(CuboidEnvironment.this, pos).getPacket());
 				return;
 			}
 
@@ -691,7 +691,7 @@ public class VirtualEnvironment extends Environment {
 				}
 			} else {
 				player.playerConnection
-						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+						.sendPacket(new VirtualBlockChangePacket(CuboidEnvironment.this, pos).getPacket());
 			}
 		}
 
@@ -712,14 +712,14 @@ public class VirtualEnvironment extends Environment {
 			boolean isSword = player.playerInteractManager.getGameMode().d() && player.bA() != null
 					&& player.bA().getItem() instanceof ItemSword;
 			if (getTileEntity(pos) == null && !isSword) {
-				PacketPlayOutBlockChange packet = new VirtualBlockChangePacket(VirtualEnvironment.this, pos)
+				PacketPlayOutBlockChange packet = new VirtualBlockChangePacket(CuboidEnvironment.this, pos)
 						.getPacket();
 				packet.block = Blocks.AIR.getBlockData();
 				player.playerConnection.sendPacket(packet);
 
 			}
 
-			ev = new VirtualBlockBreakEvent(Utils.convertPosToLoc(world, pos), VirtualEnvironment.this);
+			ev = new VirtualBlockBreakEvent(Utils.convertPosToLoc(world, pos), CuboidEnvironment.this);
 			ev.setCancelled(isSword);
 
 			IBlockData nmsData = getType(pos);
@@ -743,7 +743,7 @@ public class VirtualEnvironment extends Environment {
 					return false;
 
 				player.playerConnection
-						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+						.sendPacket(new VirtualBlockChangePacket(CuboidEnvironment.this, pos).getPacket());
 
 				if (tile != null)
 					player.playerConnection.sendPacket(tile.getUpdatePacket());
@@ -755,7 +755,7 @@ public class VirtualEnvironment extends Environment {
 				return false;
 
 			if (nmsBlock == Blocks.SKULL && !player.playerInteractManager.isCreative()) {
-				VirtualBlock.harvestBlock(nmsBlock, nmsData, VirtualEnvironment.this, pos,
+				VirtualBlock.harvestBlock(nmsBlock, nmsData, CuboidEnvironment.this, pos,
 						BlockBag.getBlockBag(player), tile);
 
 				return setBlock(pos, Blocks.AIR.getBlockData(), 3);
@@ -779,7 +779,7 @@ public class VirtualEnvironment extends Environment {
 
 			if (player.playerInteractManager.isCreative())
 				player.playerConnection
-						.sendPacket(new VirtualBlockChangePacket(VirtualEnvironment.this, pos).getPacket());
+						.sendPacket(new VirtualBlockChangePacket(CuboidEnvironment.this, pos).getPacket());
 			else {
 				ItemStack held = player.bZ();
 				boolean flag = player.b(nmsBlock);
@@ -792,7 +792,7 @@ public class VirtualEnvironment extends Environment {
 
 				if (flag && couldSet) {
 					// nmsBlock.a(nmsWorld, player, pos, nmsData, tile);
-					VirtualBlock.harvestBlock(nmsBlock, nmsData, VirtualEnvironment.this, pos,
+					VirtualBlock.harvestBlock(nmsBlock, nmsData, CuboidEnvironment.this, pos,
 							BlockBag.getBlockBag(player), tile);
 				}
 			}
