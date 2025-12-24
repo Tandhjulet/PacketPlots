@@ -26,8 +26,8 @@ import net.dashmc.plots.config.serializers.BlockPositionSerializer;
 import net.dashmc.plots.config.serializers.CuboidRegionSerializer;
 import net.dashmc.plots.listeners.ConnectionListener;
 import net.dashmc.plots.packets.PacketInterceptor;
+import net.dashmc.plots.plot.Environment;
 import net.dashmc.plots.plot.IEnvironment;
-import net.dashmc.plots.plot.VirtualEnvironment;
 import net.dashmc.plots.utils.Debug;
 
 public class PacketPlots extends JavaPlugin {
@@ -109,7 +109,7 @@ public class PacketPlots extends JavaPlugin {
 			e.printStackTrace();
 		}
 
-		for (IEnvironment env : VirtualEnvironment.getActive()) {
+		for (IEnvironment env : Environment.getActive()) {
 			env.save();
 		}
 

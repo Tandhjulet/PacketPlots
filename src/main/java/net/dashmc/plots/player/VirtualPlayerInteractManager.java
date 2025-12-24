@@ -6,8 +6,8 @@ import java.lang.reflect.Modifier;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
+import net.dashmc.plots.plot.Environment;
 import net.dashmc.plots.plot.IEnvironment;
-import net.dashmc.plots.plot.VirtualEnvironment;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
@@ -62,7 +62,7 @@ public class VirtualPlayerInteractManager extends PlayerInteractManager {
 		}
 
 		BlockPosition pos = getDestroyPosition();
-		IEnvironment env = VirtualEnvironment.get(player);
+		IEnvironment env = Environment.get(player);
 		if (env == null || !env.isValidLocation(pos)) {
 			super.a();
 			return;

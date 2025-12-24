@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import net.dashmc.plots.PacketPlots;
 import net.dashmc.plots.player.VirtualPlayerInteractManager;
 import net.dashmc.plots.plot.BlockBag;
+import net.dashmc.plots.plot.Environment;
 import net.dashmc.plots.plot.IEnvironment;
 import net.dashmc.plots.plot.VirtualConnection;
 import net.dashmc.plots.plot.VirtualEnvironment;
@@ -45,7 +46,7 @@ public class ConnectionListener implements Listener {
 		if (connection != null)
 			connection.close();
 
-		IEnvironment environment = VirtualEnvironment.get(player);
+		IEnvironment environment = Environment.get(player);
 		if (environment != null)
 			environment.close();
 	}

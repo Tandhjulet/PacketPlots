@@ -7,7 +7,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -74,12 +73,7 @@ import net.minecraft.server.v1_8_R3.TileEntity;
  * region pos2 (x,y,z 12 bytes - 3x int)
  * combined blockdata in sequence z => y => x (so to unpack, loop x => y => z)
  */
-
-public class VirtualEnvironment implements IEnvironment {
-	private static final HashMap<Player, VirtualEnvironment> virtualEnvironments = new HashMap<>();
-	private static final File DATA_DIRECTORY = new File(PacketPlots.getInstance().getDataFolder(), "data");
-
-	// private @Getter HashMap<Integer, Entity> entities = new HashMap<>();
+public class VirtualEnvironment extends Environment {
 	private @Getter final HashSet<VirtualConnection> connections = new HashSet<>();
 	private @Getter HashMap<Integer, VirtualChunk> virtualChunks = new HashMap<>();
 	private @Getter final List<TileEntity> tileEntities = Lists.newArrayList();
@@ -89,18 +83,6 @@ public class VirtualEnvironment implements IEnvironment {
 	private @Getter InteractManager interactManager = new InteractManager();
 	private @Getter CuboidRegion region;
 	private @Getter @Setter RenderPipeline renderPipeline = RenderPipelineFactory.createEmptyPipeline();
-
-	public static Collection<VirtualEnvironment> getActive() {
-		return virtualEnvironments.values();
-	}
-
-	public static VirtualEnvironment get(Player player) {
-		return virtualEnvironments.get(player);
-	}
-
-	public static VirtualEnvironment get(EntityPlayer player) {
-		return get(player.getBukkitEntity());
-	}
 
 	public VirtualEnvironment(Player player) throws IOException {
 		if (!player.isOnline())
@@ -122,14 +104,14 @@ public class VirtualEnvironment implements IEnvironment {
 				throw new IOException(
 						"Mismatched UUIDs: (" + prevUuid + " => " + ownerUuid + "). File might be corrupt");
 
-			virtualEnvironments.put(player, this);
+			createEnvironment(player);
 			startVirtualization(nmsOwner);
 			return;
 		}
 
 		Debug.log("No save file could be found for " + player.getName());
 
-		virtualEnvironments.put(player, this);
+		createEnvironment(player);
 
 		this.ownerUuid = player.getUniqueId();
 		this.world = PacketPlots.getPlotConfig().getWorld();
@@ -266,7 +248,7 @@ public class VirtualEnvironment implements IEnvironment {
 
 		connections.clear();
 
-		virtualEnvironments.remove(getOwner());
+		removeEnvironment(getOwner());
 		virtualChunks.clear();
 	}
 
@@ -299,8 +281,8 @@ public class VirtualEnvironment implements IEnvironment {
 		EntityPlayer nmsOwner = ((CraftPlayer) owner).getHandle();
 		if (owner == null || !owner.isOnline())
 			throw new IOException("Tried initialization of VirtualEnvironment for offline player: " + ownerUuid);
-		virtualEnvironments.put(owner, this);
 
+		createEnvironment(owner);
 		startVirtualization(nmsOwner);
 	}
 
